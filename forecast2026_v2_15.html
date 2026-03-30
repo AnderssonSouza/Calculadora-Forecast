@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Forecast 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --blue:#2563eb;--blue-lt:#eff6ff;--blue-md:#dbeafe;--blue-dk:#1d4ed8;
+  --green:#16a34a;--green-lt:#f0fdf4;--green-md:#dcfce7;
+  --red:#dc2626;--red-lt:#fef2f2;--red-md:#fee2e2;
+  --yellow:#ca8a04;--yellow-lt:#fefce8;--yellow-md:#fef9c3;
+  --purple:#7c3aed;--purple-lt:#f5f3ff;--purple-md:#ede9fe;
+  --border:#e5e7eb;--text:#0f172a;--muted:#64748b;--faint:#94a3b8;
+  --surface:#fff;--bg:#f8fafc;
+  --font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+  --r:8px;--r-lg:12px;
+  --sh:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --sh-md:0 4px 12px rgba(0,0,0,.08);
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13px;line-height:1.5;}
+
+/* ── HEADER ── */
+header{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;}
+.hdr-l{display:flex;align-items:center;gap:12px;}
+.hdr-logo{width:34px;height:34px;background:var(--blue);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;letter-spacing:-.5px;}
+.hdr-info .name{font-size:15px;font-weight:700;letter-spacing:-.2px;}
+.hdr-info .sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.hdr-r{display:flex;align-items:center;gap:8px;}
+.badge-lock{display:flex;align-items:center;gap:5px;padding:4px 10px;background:var(--bg);border:1px solid var(--border);border-radius:20px;font-size:11px;font-weight:500;color:var(--muted);}
+.btn-export{display:flex;align-items:center;gap:6px;padding:6px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);font-size:12px;font-weight:600;color:var(--text);cursor:pointer;font-family:var(--font);transition:background .12s,border-color .12s;}
+.btn-export:hover{background:var(--bg);border-color:var(--blue);color:var(--blue);}
+.btn-export-all{background:var(--blue);color:#fff;border-color:var(--blue);}
+.btn-export-all:hover{background:var(--blue-dk);color:#fff;border-color:var(--blue-dk);}
+.export-sep{width:1px;height:20px;background:var(--border);margin:0 2px;}
+
+/* ── TABS L1 ── */
+.tabs-l1{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;}
+.tab-l1{padding:13px 16px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;position:relative;top:1px;transition:color .12s;}
+.tab-l1:hover{color:var(--text);}
+.tab-l1.active{color:var(--blue);border-bottom-color:var(--blue);}
+
+/* ── TABS L2 ── */
+.tabs-l2{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:none;}
+.tabs-l2.show{display:flex;}
+.tab-l2{padding:9px 14px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;position:relative;top:1px;transition:color .12s;}
+.tab-l2:hover{color:var(--text);}
+.tab-l2.active{color:var(--blue);border-bottom-color:var(--blue);}
+
+/* ── LAYOUT ── */
+.content{padding:20px 24px 40px;max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:16px;}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh);}
+.card-body{padding:18px 20px;}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.card-title{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;}
+.card-icon{font-size:14px;}
+
+/* ── SCENARIOS ── */
+.scenarios{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.sc{border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px;background:var(--surface);box-shadow:var(--sh);}
+.sc-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.sc-ico{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.sc-ico.c{background:#fee2e2;}.sc-ico.b{background:#dbeafe;}.sc-ico.o{background:#dcfce7;}
+.sc-label{font-size:12px;font-weight:600;}
+.sc-val{font-size:24px;font-weight:300;letter-spacing:-.5px;margin-bottom:5px;}
+.sc-desc{font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.4;}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;}
+.badge.neg{background:var(--red-md);color:var(--red);}
+.badge.pos{background:var(--green-md);color:var(--green);}
+.badge.neu{background:var(--blue-md);color:var(--blue);}
+
+/* ── Q1 TABLE ── */
+.q1-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.q1-tbl th{padding:7px 10px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;text-align:right;white-space:nowrap;}
+.q1-tbl th:first-child{text-align:left;min-width:130px;}
+.q1-tbl th.th-month{color:var(--blue);font-size:11px;text-transform:none;text-align:center;}
+.q1-tbl td{padding:8px 10px;text-align:right;border-top:1px solid var(--border);}
+.q1-tbl td:first-child{text-align:left;font-size:12px;}
+.q1-tbl .real{color:var(--blue);font-weight:600;}
+.q1-tbl .budget{color:var(--muted);}
+.q1-total{font-weight:700!important;color:var(--text)!important;}
+.row-icon{font-size:11px;margin-right:5px;}
+
+/* ── PARAMS ── */
+.params-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;}
+.param-item label{display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:4px;}
+.param-item input{width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:12px;font-family:var(--mono);color:var(--text);outline:none;transition:border-color .15s;}
+.param-item input:focus{border-color:var(--blue);}
+.param-item input:disabled{opacity:.5;cursor:not-allowed;background:var(--bg);}
+.sliders-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:start;}
+.sl-item .sl-lbl{font-size:11px;font-weight:500;color:var(--muted);display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+.sl-val{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--blue);}
+.sl-track{display:flex;align-items:center;gap:6px;}
+.sl-track span{font-size:10px;color:var(--faint);}
+input[type=range]{flex:1;height:4px;accent-color:var(--blue);cursor:pointer;}
+.sl-hints{display:flex;justify-content:space-between;margin-top:3px;font-size:9.5px;color:var(--faint);}
+.btn-link{background:none;border:none;font-size:10px;color:var(--blue);cursor:pointer;text-decoration:underline;padding:0;}
+.btn-link:hover{color:var(--blue-dk);}
+
+/* ── EXPAND PANEL ── */
+.expand-panel{margin-top:12px;border:1px solid var(--blue-md);border-radius:var(--r);background:var(--blue-lt);padding:12px 14px;}
+.expand-title{font-size:11.5px;font-weight:600;margin-bottom:10px;}
+.expand-grid{display:grid;grid-template-columns:repeat(9,1fr);gap:6px;}
+.ec-item{text-align:center;display:flex;flex-direction:column;align-items:center;gap:1px;}
+.ec-mes{font-size:10px;color:var(--muted);font-weight:500;}
+.ec-budget{font-size:11px;color:var(--muted);text-decoration:line-through;font-family:var(--mono);}
+.ec-adj{font-size:13px;font-weight:700;color:var(--blue);font-family:var(--mono);}
+.ec-diff{font-size:10px;font-family:var(--mono);font-weight:600;}
+.ec-diff.pos{color:var(--green);}.ec-diff.neg{color:var(--red);}
+
+/* Evasão expand */
+.ev-expand{margin-top:12px;border:1px solid var(--blue-md);border-radius:var(--r);background:var(--blue-lt);padding:12px 14px;}
+.ev-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.ev-item{display:flex;align-items:center;gap:8px;}
+.ev-from{text-align:right;}.ev-from p:first-child{font-size:10px;color:var(--muted);}
+.ev-from .ev-old{font-family:var(--mono);font-size:11px;color:var(--muted);text-decoration:line-through;}
+.ev-new{font-family:var(--mono);font-size:13px;font-weight:700;}
+.ev-arrow{font-size:11px;color:var(--muted);}
+
+/* Expandido — monthly inputs */
+.monthly-inputs{margin-top:14px;}
+.monthly-inputs label{display:block;font-size:12px;font-weight:600;margin-bottom:8px;}
+.monthly-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:6px;}
+.mi-item label{font-size:10px;color:var(--muted);}
+.mi-item input{width:100%;padding:4px 6px;border:1px solid var(--border);border-radius:5px;font-size:11px;font-family:var(--mono);margin-top:2px;outline:none;}
+.mi-item input:focus{border-color:var(--blue);}
+
+/* ── GOAL BAR ── */
+.goal-bar{display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
+.goal-item .lbl{font-size:11px;color:var(--muted);font-weight:500;}
+.goal-item .val{font-size:17px;font-weight:700;letter-spacing:-.3px;font-family:var(--mono);}
+.goal-arrow{font-size:16px;color:var(--muted);}
+.gap-neg{color:var(--red);}.gap-pos{color:var(--green);}
+.btn-ai{
+  margin-left:auto;display:flex;align-items:center;gap:7px;
+  padding:10px 20px;border-radius:var(--r-lg);border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--blue),var(--blue-dk));
+  color:#fff;font-size:13px;font-weight:600;font-family:var(--font);
+  box-shadow:0 2px 8px rgba(37,99,235,.35);
+  transition:opacity .15s,transform .1s;
+}
+.btn-ai:hover{opacity:.9;transform:translateY(-1px);}
+.btn-ai:active{transform:translateY(0);}
+.btn-ai.loading{opacity:.75;cursor:not-allowed;}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── AI PANEL ── */
+.ai-panel{border:1px solid var(--blue-md);border-radius:var(--r-lg);overflow:hidden;animation:slideDown .2s ease;}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.ai-panel-hdr{background:linear-gradient(135deg,var(--blue),var(--blue-dk));padding:14px 18px;display:flex;align-items:center;justify-content:space-between;color:#fff;}
+.ai-panel-hdr .title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;}
+.ai-panel-body{padding:18px 20px;}
+.ai-loading{display:flex;align-items:center;gap:10px;justify-content:center;padding:32px;color:var(--muted);}
+.ai-section{margin-bottom:18px;}
+.ai-section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.ai-summary{background:var(--bg);border-radius:var(--r);padding:12px 14px;font-size:12.5px;line-height:1.7;color:var(--text);}
+.ai-3cols{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.ai-col{border:1px solid var(--border);border-radius:var(--r);padding:12px;text-align:center;}
+.ai-col .lbl{font-size:10px;color:var(--muted);margin-bottom:4px;}
+.ai-col .vl{font-size:16px;font-weight:700;font-family:var(--mono);}
+.ai-col.success{border-color:#86efac;background:var(--green-lt);}
+
+/* Alavancas table */
+.ala-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.ala-tbl th{padding:7px 10px;font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid var(--border);text-align:left;}
+.ala-tbl th:not(:first-child){text-align:center;}
+.ala-tbl th:last-child,.ala-tbl th:nth-child(5){text-align:right;}
+.ala-tbl td{padding:9px 10px;border-bottom:1px solid var(--border);}
+.ala-tbl td:not(:first-child){text-align:center;}
+.ala-tbl td:nth-child(5){text-align:right;}
+.ala-name{font-weight:600;font-size:12px;}
+.ala-desc{font-size:11px;color:var(--muted);margin-top:2px;}
+.via-alta{background:var(--green-md);color:var(--green);}
+.via-media{background:var(--yellow-md);color:var(--yellow);}
+.via-baixa{background:var(--red-md);color:var(--red);}
+.via-pill{padding:2px 8px;border-radius:12px;font-size:10.5px;font-weight:600;}
+
+/* Captados sugeridos */
+.cap-sug-grid{display:grid;grid-template-columns:repeat(9,1fr);gap:8px;margin-top:8px;}
+.cs-item{border:1px solid var(--border);border-radius:var(--r);padding:8px 4px;text-align:center;}
+.cs-mes{font-size:10px;font-weight:600;color:var(--muted);}
+.cs-budget{font-size:11px;font-family:var(--mono);color:var(--muted);}
+.cs-arrow{font-size:10px;color:var(--muted);}
+.cs-sug{font-size:14px;font-weight:700;font-family:var(--mono);color:var(--blue);}
+.cs-diff{font-size:10px;font-family:var(--mono);font-weight:600;}
+.cs-diff.pos{color:var(--green);}.cs-diff.neg{color:var(--red);}
+
+/* Final projection */
+.ai-final{background:var(--blue-lt);border:1px solid var(--blue-md);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;}
+.ai-final .lbl{font-size:11px;color:var(--muted);}
+.ai-final .vl{font-size:22px;font-weight:700;font-family:var(--mono);}
+.apply-btn{padding:7px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);transition:background .12s;}
+.apply-btn:hover{background:var(--bg);}
+
+/* ── CHARTS ── */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px;box-shadow:var(--sh);}
+.chart-title{font-size:12.5px;font-weight:600;margin-bottom:14px;}
+.chart-card canvas{max-height:210px;}
+
+/* ── BREAKDOWN ── */
+.bk-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.bk-tbl th{padding:8px 10px;font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid var(--border);text-align:right;white-space:nowrap;}
+.bk-tbl th:first-child,.bk-tbl th:nth-child(2){text-align:left;}
+.bk-tbl td{padding:9px 10px;border-bottom:1px solid var(--border);text-align:right;}
+.bk-tbl td:first-child{text-align:left;font-weight:500;}
+.bk-tbl td:nth-child(2){text-align:left;}
+.bk-tbl tr:last-child td{background:var(--bg);font-weight:700;border-top:2px solid var(--border);border-bottom:none;}
+.bk-tbl tr:hover:not(:last-child){background:#fafbfc;}
+.status-r{background:var(--green-md);color:var(--green);padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:700;}
+.status-f{background:var(--blue-md);color:var(--blue);padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:700;}
+.delta-pos{color:var(--green);font-weight:600;}
+.delta-neg{color:var(--red);font-weight:600;}
+.rec-cell{font-weight:600;}
+
+/* UTILS */
+.btn-sm{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font);transition:background .12s;}
+.btn-sm:hover{background:var(--bg);}
+.btn-close{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.7);font-size:18px;line-height:1;padding:2px;}
+.btn-close:hover{color:#fff;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-l">
+    <div class="hdr-logo">F</div>
+    <div class="hdr-info">
+      <div class="name">Calculadora de Forecast 2026</div>
+      <div class="sub" id="hdr-sub">Pós-Graduação Odontologia</div>
+    </div>
+  </div>
+  <div class="hdr-r">
+    <button class="btn-export" onclick="exportCurrentTab()" title="Exportar aba atual para Excel">⬇ Exportar Aba</button>
+    <div class="export-sep"></div>
+    <button class="btn-export btn-export-all" onclick="exportAll()" title="Exportar tudo para Excel">⬇ Exportar Tudo</button>
+    <div class="export-sep"></div>
+    <div class="badge-lock">🔒 Orçamento escrito em pedra</div>
+  </div>
+</header>
+
+<div class="tabs-l1">
+  <div class="tab-l1 active" onclick="setL1('pgo')">PG Odonto</div>
+  <div class="tab-l1" onclick="setL1('gme')">G. Medicina</div>
+  <div class="tab-l1" onclick="setL1('god')">G. Odonto</div>
+</div>
+<div class="tabs-l2" id="tabs-l2">
+  <div class="tab-l2" onclick="setL2('gme-consolidado')">Consolidado</div>
+  <div class="tab-l2 active" onclick="setL2('gme-campinas')">Campinas</div>
+  <div class="tab-l2" onclick="setL2('gme-limeira')">Limeira</div>
+  <div class="tab-l2" onclick="setL2('gme-araras')">Araras</div>
+  <div class="tab-l2" onclick="setL2('gme-fms')">FMS</div>
+</div>
+
+<div class="content" id="content"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════
+const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const MESES_ABR_DEZ = MESES.slice(3);
+const BRL = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
+const BRL2 = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0,maximumFractionDigits:0}).format(v);
+const N = v => v==null?'—':Math.round(v).toLocaleString('pt-BR');
+const PCT = v => (v*100).toFixed(1)+'%';
+const PCTS = v => (v>=0?'+':'')+((v)*100).toFixed(1)+'%';
+
+// ═══════════════════════════════════════════════════════════
+//  FORECAST ENGINE  (translated from forecast-engine.ts)
+// ═══════════════════════════════════════════════════════════
+function calculateForecast(p) {
+  const {
+    captadosBudgetPorMes, ticketMedioCaptadosEntrada, ticketMedioCaptadosSub,
+    evasaoCaptadosM1, evasaoCaptadosM2, evasaoCaptados,
+    receitaRealizada, metaOrcamento, lancamentosExistentes, q1Real,
+    ajusteCaptacao, ajusteEvasao,
+  } = p;
+
+  // Q1 comparison
+  const q1CaptadosReal   = q1Real.captados.reduce((a,b)=>a+b,0);
+  const q1CaptadosBudget = captadosBudgetPorMes.slice(0,3).reduce((a,b)=>a+b,0);
+  const captacaoFactor   = q1CaptadosBudget>0 ? q1CaptadosReal/q1CaptadosBudget : 1;
+
+  // Triangular matrix: new captados from Abr-Dez (entrada >= 3)
+  const mat = Array.from({length:12},()=>Array(12).fill(0));
+  for (let ent=3;ent<12;ent++) {
+    const init = Math.round(captadosBudgetPorMes[ent] * ajusteCaptacao);
+    for (let cur=ent;cur<12;cur++) {
+      const d = cur-ent;
+      if (d===0) { mat[ent][cur]=init; continue; }
+      const prev = mat[ent][cur-1];
+      const taxa = d===1 ? evasaoCaptadosM1*ajusteEvasao
+                 : d===2 ? evasaoCaptadosM2*ajusteEvasao
+                 :         evasaoCaptados   *ajusteEvasao;
+      mat[ent][cur] = Math.round(prev*(1-taxa));
+    }
+  }
+
+  // Receita captados (Abr-Dez)
+  const recCap = Array(12).fill(0);
+  for (let mes=3;mes<12;mes++) {
+    let r=0;
+    for (let ent=3;ent<=mes;ent++) {
+      const al = mat[ent][mes];
+      const tm = mes===ent ? ticketMedioCaptadosEntrada[ent] : ticketMedioCaptadosSub;
+      r += al*tm;
+    }
+    recCap[mes]=r;
+  }
+
+  // Q1 receitas separadas
+  const recCarr = Array(12).fill(0);
+  const baseContratada = Array(12).fill(0);
+  for (let i=0;i<3;i++) {
+    recCap[i]  = q1Real.captados[i]*q1Real.tmCaptados[i];
+    recCarr[i] = q1Real.carregados[i]*q1Real.tmCarregados[i];
+  }
+  for (let i=3;i<12;i++) {
+    baseContratada[i] = lancamentosExistentes[i-3].valor;
+    recCarr[i]        = lancamentosExistentes[i-3].valor;
+  }
+
+  // Receita total
+  const rec = Array(12).fill(0);
+  const status = [];
+  for (let i=0;i<12;i++) {
+    if (i<3) { rec[i]=receitaRealizada[i]; status.push('REALIZADO'); }
+    else     { rec[i]=baseContratada[i]+recCap[i]; status.push('FORECAST'); }
+  }
+
+  const delta    = rec.map((r,i)=>r-metaOrcamento[i]);
+  const deltaPct = rec.map((r,i)=>(r-metaOrcamento[i])/metaOrcamento[i]);
+
+  // Acumulado
+  const accF=[], accM=[];
+  rec.reduce((a,v)=>{const s=a+v;accF.push(s);return s;},0);
+  metaOrcamento.reduce((a,v)=>{const s=a+v;accM.push(s);return s;},0);
+
+  // Cenários
+  const totReal  = receitaRealizada.reduce((a,b)=>a+b,0);
+  const totBase  = lancamentosExistentes.reduce((a,b)=>a+b.valor,0);
+  const totCapF  = recCap.slice(3).reduce((a,b)=>a+b,0);
+  const totAll   = rec.reduce((a,b)=>a+b,0);
+
+  return {
+    meses:MESES, recCap, recCarr, rec, metaOrcamento,
+    delta, deltaPct, accF, accM,
+    mat, baseContratada, status,
+    cenarioConservador: totReal+totBase,
+    cenarioBase: totAll,
+    cenarioOtimista: totAll+totCapF*0.10,
+    q1Comparison:{captadosReal:q1CaptadosReal,captadosBudget:q1CaptadosBudget,captacaoFactor},
+    _isGME: !!p._gmeIsSpecial,
+    _isPGO: !!p._pgoIsSpecial,
+    _p: (p._gmeIsSpecial || p._pgoIsSpecial) ? p : undefined,
+  };
+}
+
+
+// ═══════════════════════════════════════════════════════════
+//  FORECAST ENGINE — G. ODONTO (coorte única, entrada em Jan)
+// ═══════════════════════════════════════════════════════════
+// Meses intersemestrais em 2026: Jun (idx 5) e Dez (idx 11)
+const GOD_INTER = new Set([5, 11]);
+
+function calculateForecastGOD(p) {
+  const {
+    _godCarrMarFim, _godCapMarFim,
+    evasaoCaptadosM1: evIntra,
+    evasaoCaptadosM2: evInter,
+    ajusteEvasao,
+    metaOrcamento,
+    receitaRealizada,
+    q1Real,
+    captadosBudgetPorMes,
+  } = p;
+
+  const tmCarr = p.ticketMedioCarregados[0]; // Abr-Dez TM carregados
+  const tmCap  = p.ticketMedioCaptadosSub;   // Abr-Dez TM captados
+
+  // Projeção Abr-Dez a partir do saldo fim de Mar
+  let carr = _godCarrMarFim;
+  let cap  = _godCapMarFim;
+
+  const rec = [...receitaRealizada];       // Jan, Fev, Mar realizados
+  const baseContratada  = [0, 0, 0];
+  const recCarrArr      = [0, 0, 0];
+  const recCapArr       = [0, 0, 0];
+  const alunosTotais    = q1Real.carregados.map((c,i) => c + (q1Real.captados[i]||0));
+  const statusArr       = ['REALIZADO','REALIZADO','REALIZADO'];
+
+  for (let i = 3; i < 12; i++) {
+    const ev = GOD_INTER.has(i) ? evInter : evIntra;
+    const evAdj = ev * ajusteEvasao;
+    carr = Math.max(0, carr * (1 - evAdj));
+    cap  = Math.max(0, cap  * (1 - evAdj));
+    const cArr = Math.round(carr), cCap = Math.round(cap);
+    const revCarr = cArr * tmCarr;
+    const revCap  = cCap * tmCap;
+    const revTotal = revCarr + revCap;
+    rec.push(revTotal);
+    baseContratada.push(revCarr);
+    recCarrArr.push(revCarr);
+    recCapArr.push(revCap);
+    alunosTotais.push(cArr + cCap);
+    statusArr.push('FORECAST');
+  }
+
+  const delta    = rec.map((r,i) => r - metaOrcamento[i]);
+  const deltaPct = rec.map((r,i) => (r - metaOrcamento[i]) / metaOrcamento[i]);
+  const accF=[], accM=[];
+  rec.reduce((a,v) => { const s=a+v; accF.push(s); return s; }, 0);
+  metaOrcamento.reduce((a,v) => { const s=a+v; accM.push(s); return s; }, 0);
+
+  const totReal = receitaRealizada.reduce((a,b)=>a+b,0);
+  const totBase = baseContratada.slice(3).reduce((a,b)=>a+b,0) + recCapArr.slice(3).reduce((a,b)=>a+b,0);
+  const totAll  = rec.reduce((a,b)=>a+b,0);
+
+  // Q1 comparison
+  const q1CaptadosReal   = q1Real.captados.reduce((a,b)=>a+b,0);
+  const q1CaptadosBudget = captadosBudgetPorMes[0] || 0; // só Jan entra
+
+  return {
+    meses:MESES, rec, recCap:recCapArr, recCarr:recCarrArr,
+    metaOrcamento, delta, deltaPct, accF, accM,
+    baseContratada, status:statusArr, alunosTotais,
+    cenarioConservador: totReal + totBase,
+    cenarioBase: totAll,
+    cenarioOtimista: totAll, // sem novos captados Abr-Dez → igual ao base
+    _isGOD: true,
+    q1Comparison:{
+      captadosReal: q1CaptadosReal,
+      captadosBudget: q1CaptadosBudget,
+      captacaoFactor: q1CaptadosBudget > 0 ? q1CaptadosReal / q1CaptadosBudget : 1,
+    },
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+//  BU CONFIGS  (from bu-configs.ts)
+// ═══════════════════════════════════════════════════════════
+function pgoParams(){return {
+  _pgoIsSpecial: true,
+  // Orçamento 2026 - Mandic (V7)
+  alunosCarregados:[6440,6202,6179,5938,5701,5525,5389,5145,4921,4554,4357,4178],
+  formatura:[238,23,241,237,176,136,244,224,367,197,179,0],
+  ticketMedioCarregados:[1861,1855,1863,1879,1872,1875,1878,1889,1897,1900,1906,1911],
+  captadosBudgetPorMes:[16,701,1156,651,337,259,199,619,533,524,198,96],
+  ticketMedioCaptadosEntrada:[2000,2923,2617,2299,2116,1980,2182,2224,2033,2016,2036,2017],
+  ticketMedioCaptadosSub:1995,
+  evasaoCaptadosM1:0.082215,evasaoCaptadosM2:0.012354,evasaoCaptados:0.010650,evasaoCarregados:0.0050,
+  // Q1 Realizado — Forecast_PG_Odontologia_2026_v2.xlsx / FORECAST
+  receitaRealizada:[12239900.97,13803461.35,14776271.79],
+  q1Real:{
+    captados:[64,794,1867],
+    carregados:[6511,6198,5838],
+    tmCaptados:[1873.55,1986.40,1917.75],
+    tmCarregados:[1873.55,1986.40,1917.75],
+  },
+  metaOrcamento:[12016815.71,13484265.30,15465183.08,15701833.33,15531530.25,15533920.85,15597605.39,16427975.43,16820808.50,17018120.27,16613297.12,15778516.73],
+  // Base lançamentos Abr-Dez — Din Fat (inclui Q1 captados já matriculados)
+  lancamentosExistentes:[
+    {alunos:7309,valor:12884135.92},
+    {alunos:7072,valor:12551510.26},
+    {alunos:6901,valor:12715760.76},
+    {alunos:6739,valor:12577604.64},
+    {alunos:6484,valor:12193631.26},
+    {alunos:6274,valor:11861462.93},
+    {alunos:5907,valor:11188042.09},
+    {alunos:5722,valor:10862111.98},
+    {alunos:5540,valor:10535229.01},
+  ],
+  ajusteCaptacao:1.0,ajusteEvasao:1.0,
+};}
+function godParams(){return {
+  // ── Budget V4 (meta escrita em pedra) ───────────────────────────────────
+  captadosBudgetPorMes:[60,0,0,0,0,0,0,0,0,0,0,0], // 60 entram só em Jan
+  ticketMedioCaptadosEntrada:[5188,5188,5188,5188,5188,5188,5188,5188,5188,5188,5188,5188],
+  ticketMedioCaptadosSub:5188,
+  alunosCarregados:[126,124,123,122,121,120,118,117,116,115,114,113], // V4 budget
+  ticketMedioCarregados:[4147,4147,4147,4147,4147,4147,4147,4147,4147,4147,4147,4147], // forecast base
+  formatura:[0,0,0,0,0,0,0,0,0,0,0,0],
+
+  // ── Taxas de evasão (iguais em V4 e V5) ─────────────────────────────────
+  // evasaoCaptadosM1 = evIntra (intrasemestral), evasaoCaptadosM2 = evInter
+  evasaoCaptadosM1:0.00876, evasaoCaptadosM2:0.01324,
+  evasaoCaptados:0.00876,   evasaoCarregados:0.00876,
+
+  // ── Q1 Realizados (V5) ───────────────────────────────────────────────────
+  receitaRealizada:[866000,1074800,951362], // Jan/Fev/Mar realizados
+  q1Real:{
+    captados:[75,0,0],           // 75 entraram em Jan (vs 60 no orçamento)
+    carregados:[135,138,137],    // carregados realizados Jan/Fev/Mar
+    tmCaptados:[5188,5188,5188],
+    tmCarregados:[4138,4259,4147],
+  },
+
+  // ── Meta V4 (imutável) ────────────────────────────────────────────────────
+  metaOrcamento:[837282,842154,833335,825958,818657,811422,788193,793478,786464,779513,772623,765795],
+
+  // ── GOD-specific: estado ao fim de Mar para projetar Abr-Dez ─────────────
+  _godCarrMarFim:137, // carregados saldo fim Mar (V5 realizado)
+  _godCapMarFim:74,   // captados saldo fim Mar (V5)
+  _godIsSpecial:true,
+
+  // lancamentosExistentes não usados pelo motor GOD (mas necessário para a struct)
+  lancamentosExistentes:[
+    {alunos:209,valor:942940},{alunos:207,valor:934605},{alunos:205,valor:926345},
+    {alunos:203,valor:900672},{alunos:201,valor:905860},{alunos:199,valor:897853},
+    {alunos:197,valor:889917},{alunos:195,valor:882052},{alunos:194,valor:874256},
+  ],
+  ajusteCaptacao:1.0, ajusteEvasao:1.0,
+};}
+function gmeCampinasParams(){
+  return {
+    _gmeIsSpecial: true,
+    alunosCarregados:[1245,1238,1222,1222,1221,1220,1143,1092,1090,1088,1085,1083],
+    formatura:[0,0,0,0,0,10,0,0,0,0,0,0],
+    ticketMedioCarregados:[14344,14604,14126,14126,14126,14126,14126,14205,14126,14126,14126,14126],
+    captadosBudgetPorMes:[225,0,0,0,0,0,0,0,0,0,0,0],
+    ticketMedioCaptadosEntrada:[14578,14578,14578,14578,14578,14578,14578,14578,14578,14578,14578,14578],
+    ticketMedioCaptadosSub:14578,
+    evasaoCarregadosIntra:0.001022, evasaoCarregadosInter:0.016965,
+    evasaoCaptadosM1:0.013659, evasaoCaptadosM2:0.002453, evasaoCaptados:0.002453,
+    receitaRealizada:[21721561,21942500,21124700],
+    q1Real:{captados:[265,265,265],carregados:[1245,1238,1222],tmCaptados:[14578,14578,14578],tmCarregados:[14344,14604,14126]},
+    metaOrcamento:[20772145,20808718,20687226,20645750,20604377,20556060,20954428,21006381,20940931,20895523,20853645,20793950],
+    lancamentosExistentes:[
+      {alunos:1485,valor:21103111},{alunos:1484,valor:21081522},{alunos:1482,valor:21059955},
+      {alunos:1372,valor:20424285},{alunos:1351,valor:20297648},{alunos:1348,valor:20174019},
+      {alunos:1345,valor:20137297},{alunos:1343,valor:20100646},{alunos:1340,valor:20064065},
+    ],
+    ajusteCaptacao:1.0,ajusteEvasao:1.0,
+  };
+}
+function gmeLimeiraParams(){return {
+  _gmeIsSpecial: true,
+  alunosCarregados:[65,65,63,63,63,62,55,53,52,52,51,51],
+  formatura:[0,0,0,0,0,0,0,0,0,0,0,0],
+  ticketMedioCarregados:[13387,15455,13686,13686,13686,13686,13686,14091,13686,13686,13686,13686],
+  captadosBudgetPorMes:[55,0,0,0,0,0,0,0,0,0,0,0],
+  ticketMedioCaptadosEntrada:[14578,13878,13878,13878,13878,13878,13878,13878,13878,13878,13878,13878],
+  ticketMedioCaptadosSub:13878,
+  evasaoCarregadosIntra:0.003475, evasaoCarregadosInter:0.057282,
+  evasaoCaptadosM1:0.020646, evasaoCaptadosM2:0.009827, evasaoCaptados:0.009827,
+  receitaRealizada:[1599031,1698500,1556143],
+  q1Real:{captados:[50,50,50],carregados:[65,65,63],tmCaptados:[14578,13878,13878],tmCarregados:[13387,15455,13686]},
+  metaOrcamento:[1750739,1741056,1718688,1706854,1695167,1683706,1470639,1483299,1473135,1463048,1453031,1443082],
+  lancamentosExistentes:[
+    {alunos:113,valor:1550736},{alunos:112,valor:1545329},{alunos:112,valor:1539940},
+    {alunos:138,valor:1907307},{alunos:134,valor:1898329},{alunos:133,valor:1857680},
+    {alunos:132,valor:1844001},{alunos:131,valor:1835082},{alunos:130,valor:1826228},
+  ],
+  ajusteCaptacao:1.0,ajusteEvasao:1.0,
+};}
+function gmeArarasParams(){
+  return {
+    _gmeIsSpecial: true,
+    alunosCarregados:[627,638,633,633,632,631,556,455,453,452,451,450],
+    formatura:[0,0,0,0,0,85,0,0,0,0,0,0],
+    ticketMedioCarregados:[13256,13743,12857,12857,12857,12857,12857,13000,12857,12857,12857,12857],
+    captadosBudgetPorMes:[120,0,0,0,0,0,0,0,0,0,0,0],
+    ticketMedioCaptadosEntrada:[14578,13878,13878,13878,13878,13878,13878,13878,13878,13878,13878,13878],
+    ticketMedioCaptadosSub:13878,
+    evasaoCarregadosIntra:0.001175, evasaoCarregadosInter:0.012775,
+    evasaoCaptadosM1:0.011613, evasaoCaptadosM2:0.002094, evasaoCaptados:0.002094,
+    receitaRealizada:[9798500,10183800,9554153],
+    q1Real:{captados:[102,102,102],carregados:[627,638,633],tmCaptados:[14578,13878,13878],tmCarregados:[13256,13743,12857]},
+    metaOrcamento:[10703837,10755100,10716850,10692136,10667487,10643966,9659811,9719257,9685807,9661507,9639229,9617008],
+    lancamentosExistentes:[
+      {alunos:734,valor:9542924},{alunos:733,valor:9531695},{alunos:732,valor:9520480},
+      {alunos:558,valor:8213426},{alunos:554,valor:8234564},{alunos:553,valor:8150862},
+      {alunos:552,valor:8133639},{alunos:550,valor:8116457},{alunos:549,valor:8099313},
+    ],
+    ajusteCaptacao:1.0,ajusteEvasao:1.0,
+  };
+}
+function gmeFmsParams(){
+  return {
+    _gmeIsSpecial: true,
+    alunosCarregados:[270,292,290,290,289,289,252,221,220,219,218,217],
+    formatura:[0,0,0,0,0,25,0,0,0,0,0,0],
+    ticketMedioCarregados:[8495,10760,9837,9837,9837,9837,9837,10094,9837,9837,9837,9837],
+    captadosBudgetPorMes:[60,0,0,0,0,0,0,0,0,0,0,0],
+    ticketMedioCaptadosEntrada:[14578,9978,9978,9978,9978,9978,9978,9978,9978,9978,9978,9978],
+    ticketMedioCaptadosSub:9978,
+    evasaoCarregadosIntra:0.002146, evasaoCarregadosInter:0.011293,
+    evasaoCaptadosM1:0.005988, evasaoCaptadosM2:0.000000, evasaoCaptados:0.000000,
+    receitaRealizada:[3489100,3960100,3670992],
+    q1Real:{captados:[82,82,82],carregados:[270,292,290],tmCaptados:[14578,9978,9978],tmCarregados:[8495,10760,9837]},
+    metaOrcamento:[3428184,3491915,3471417,3456786,3442206,3427974,3449839,3500655,3481214,3466511,3451890,3437331],
+    lancamentosExistentes:[
+      {alunos:371,valor:3663113},{alunos:370,valor:3655235},{alunos:370,valor:3647373},
+      {alunos:341,valor:3685195},{alunos:341,valor:3760782},{alunos:339,valor:3688092},
+      {alunos:338,valor:3675004},{alunos:337,valor:3661974},{alunos:335,valor:3648993},
+    ],
+    ajusteCaptacao:1.0,ajusteEvasao:1.0,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+const DEFAULT_FN = {
+  'pgo':pgoParams,'god':godParams,
+  'gme-campinas':gmeCampinasParams,'gme-limeira':gmeLimeiraParams,
+  'gme-araras':gmeArarasParams,'gme-fms':gmeFmsParams,
+};
+const BU_NAMES = {
+  'pgo':'Pós-Graduação Odontologia','god':'Graduação Odontologia',
+  'gme-consolidado':'G. Medicina — Consolidado',
+  'gme-campinas':'G. Medicina — Campinas','gme-limeira':'G. Medicina — Limeira',
+  'gme-araras':'G. Medicina — Araras','gme-fms':'G. Medicina — FMS',
+};
+
+let _l1='pgo', _l2='gme-campinas';
+let _params={};
+let _expanded=false;
+// AI state is per-BU so each tab has independent AI result/loading/visibility
+let _aiState={}; // { [buId]: { result, loading, show } }
+let _charts={};
+
+function _ai(buId){ return _aiState[buId] || (_aiState[buId]={result:null,loading:false,show:false}); }
+
+// Initialize params per BU
+Object.keys(DEFAULT_FN).forEach(k=>{ _params[k]=DEFAULT_FN[k](); });
+
+function activeBU(){ return _l1==='gme' ? _l2 : _l1; }
+
+function getParams(){
+  const id=activeBU();
+  if (id==='gme-consolidado') return null; // handled separately
+  return _params[id] || _params['pgo'];
+}
+
+// Consolidado: calculate each filial independently, then sum results
+const GME_FILIAL_IDS = ['gme-campinas','gme-limeira','gme-araras','gme-fms'];
+const GME_FILIAL_NAMES = ['Campinas','Limeira','Araras','FMS'];
+
+function calcConsolidado() {
+  const results = GME_FILIAL_IDS.map(id => calculateForecast(_params[id]));
+  const params   = GME_FILIAL_IDS.map(id => _params[id]);
+  // Sum all numeric arrays across filials
+  const sum = (arr) => arr.reduce((a,b)=>a+b, 0);
+  const sumArr = (key) => Array(12).fill(0).map((_,i) => results.reduce((s,r) => s+(r[key][i]||0), 0));
+
+  const rec     = sumArr('rec');
+  const recCap  = sumArr('recCap');
+  const recCarr = sumArr('recCarr');
+  const baseContratada = sumArr('baseContratada');
+  const metaOrcamento  = Array(12).fill(0).map((_,i) => params.reduce((s,p) => s+p.metaOrcamento[i], 0));
+  const delta   = rec.map((r,i) => r - metaOrcamento[i]);
+  const deltaPct= rec.map((r,i) => (r - metaOrcamento[i]) / metaOrcamento[i]);
+  const accF=[], accM=[];
+  rec.reduce((a,v)=>{const s=a+v;accF.push(s);return s;},0);
+  metaOrcamento.reduce((a,v)=>{const s=a+v;accM.push(s);return s;},0);
+
+  const totReal = params.reduce((s,p) => s+p.receitaRealizada.reduce((a,b)=>a+b,0), 0);
+  const totBase = results.reduce((s,r) => s+r.baseContratada.slice(3).reduce((a,b)=>a+b,0), 0);
+  const totCapF = results.reduce((s,r) => s+r.recCap.slice(3).reduce((a,b)=>a+b,0), 0);
+  const totAll  = sum(rec);
+
+  // Q1 sums
+  const q1CaptadosReal   = params.reduce((s,p) => s+p.q1Real.captados.reduce((a,b)=>a+b,0), 0);
+  const q1CaptadosBudget = params.reduce((s,p) => s+p.captadosBudgetPorMes.slice(0,3).reduce((a,b)=>a+b,0), 0);
+  const captacaoFactor   = q1CaptadosBudget > 0 ? q1CaptadosReal / q1CaptadosBudget : 1;
+
+  return {
+    _isConsolidado: true,
+    _isGME: true,
+    _filialResults: results,
+    _filialParams: params,
+    meses: MESES, rec, recCap, recCarr, baseContratada,
+    metaOrcamento, delta, deltaPct, accF, accM,
+    status: Array(12).fill(0).map((_,i)=>i<3?'REALIZADO':'FORECAST'),
+    cenarioConservador: totReal + totBase,
+    cenarioBase: totAll,
+    cenarioOtimista: totAll + totCapF * 0.10,
+    q1Comparison: { captadosReal:q1CaptadosReal, captadosBudget:q1CaptadosBudget, captacaoFactor },
+    // For Q1 display
+    q1Real: {
+      captados: [0,1,2].map(i=>params.reduce((s,p)=>s+p.q1Real.captados[i],0)),
+      carregados: [0,1,2].map(i=>params.reduce((s,p)=>s+p.q1Real.carregados[i],0)),
+      tmCaptados: [0,1,2].map(i=>Math.round(params.reduce((s,p)=>s+p.q1Real.tmCaptados[i],0)/params.length)),
+      tmCarregados: [0,1,2].map(i=>Math.round(params.reduce((s,p)=>s+p.q1Real.tmCarregados[i],0)/params.length)),
+    },
+    captadosBudgetPorMes: Array(12).fill(0).map((_,i)=>params.reduce((s,p)=>s+p.captadosBudgetPorMes[i],0)),
+    alunosCarregados: Array(12).fill(0).map((_,i)=>params.reduce((s,p)=>s+p.alunosCarregados[i],0)),
+    ticketMedioCaptadosEntrada: Array(12).fill(0).map((_,i)=>Math.round(params.reduce((s,p)=>s+p.ticketMedioCaptadosEntrada[i],0)/params.length)),
+  };
+}
+
+function buildConsolidadoParams(){ return null; } // replaced by calcConsolidado()
+
+// ═══════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function setL1(id){
+  _l1=id;
+  if(id==='gme') _l2='gme-consolidado';
+  document.querySelectorAll('.tab-l1').forEach((t,i)=>t.classList.toggle('active',['pgo','gme','god'][i]===id));
+  const l2el=document.getElementById('tabs-l2');
+  l2el.classList.toggle('show',id==='gme');
+  if(id==='gme') syncL2Tabs();
+  render();
+}
+function setL2(id){
+  _l2=id;
+  syncL2Tabs();
+  render();
+}
+function syncL2Tabs(){
+  const order=['gme-consolidado','gme-campinas','gme-limeira','gme-araras','gme-fms'];
+  document.querySelectorAll('.tab-l2').forEach((t,i)=>t.classList.toggle('active',order[i]===_l2));
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PARAM UPDATES
+// ═══════════════════════════════════════════════════════════
+function updateParam(key,val){
+  const id=activeBU();
+  if(!_params[id]) return;
+  _params[id][key]=parseFloat(val)||0;
+  render();
+  requestAnimationFrame(()=>{ const el=document.getElementById('p-'+key); if(el){el.focus();el.select();} });
+}
+function updateParamRate(key,val){
+  const id=activeBU();
+  if(!_params[id]) return;
+  const n=parseFloat(val)/100;
+  if(!isNaN(n)) _params[id][key]=n;
+  render();
+  requestAnimationFrame(()=>{ const el=document.getElementById('p-'+key); if(el){el.focus();el.select();} });
+}
+function updateSlider(key,val){
+  const id=activeBU();
+  if(!_params[id]) return;
+  _params[id][key]=parseFloat(val);
+  render();
+  requestAnimationFrame(()=>{ const el=document.getElementById('sl-'+key); if(el){el.value=val;el.focus();} });
+}
+function updateArrayVal(key,i,val){
+  const id=activeBU();
+  if(!_params[id]) return;
+  const arr=[..._params[id][key]];
+  arr[i]=parseFloat(val)||0;
+  _params[id][key]=arr;
+  render();
+}
+function resetParams(){
+  const id=activeBU();
+  if(!DEFAULT_FN[id]) return;
+  _params[id]=DEFAULT_FN[id]();
+  _aiState[id]={result:null,loading:false,show:false};
+  _expanded=false;
+  render();
+}
+function applyQ1Tendency(){
+  const id=activeBU();
+  if(!_params[id]) return;
+  const r=calculateForecast(_params[id]);
+  _params[id].ajusteCaptacao=r.q1Comparison.captacaoFactor;
+  render();
+  requestAnimationFrame(()=>{ const el=document.getElementById('sl-ajusteCaptacao'); if(el){el.value=r.q1Comparison.captacaoFactor*100;} });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  AI ANALYSIS  — Claude API (mesmo esquema do Lovable)
+// ═══════════════════════════════════════════════════════════
+
+function buildForecastSummary(p, res, buNome) {
+  const totMeta     = p.metaOrcamento.reduce((a,b)=>a+b,0);
+  const totForecast = res.rec.reduce((a,b)=>a+b,0);
+  const gap         = totForecast - totMeta;
+
+  const captQ1Real   = p.q1Real?.captados.reduce((a,b)=>a+b,0) || 0;
+  const captQ1Budget = (p.captadosBudgetPorMes||[]).slice(0,3).reduce((a,b)=>a+b,0);
+
+  let summary = `BU: ${buNome}
+META ANUAL: ${BRL2(totMeta)}
+FORECAST BASE: ${BRL2(totForecast)}
+GAP: ${BRL2(gap)} (${PCTS(gap/totMeta)})
+CENÁRIO CONSERVADOR (só base contratada): ${BRL2(res.cenarioBase - res.recCap.slice(3).reduce((a,b)=>a+b,0))}
+
+Q1 REALIZADO:
+- Captados reais: ${p.q1Real?.captados.join(', ')||'—'} (total: ${captQ1Real})
+- Captados budget: ${(p.captadosBudgetPorMes||[]).slice(0,3).join(', ')} (total: ${captQ1Budget})
+- Performance Q1: ${captQ1Budget>0?PCTS(captQ1Real/captQ1Budget-1):'—'} vs budget
+- Receita Q1 realizada: ${p.receitaRealizada?BRL2(p.receitaRealizada.reduce((a,b)=>a+b,0)):'—'}
+
+BREAKDOWN MENSAL:
+`;
+  MESES.forEach((mes,i) => {
+    const st = res.status[i] || (i<3?'REALIZADO':'FORECAST');
+    summary += `${mes}: ${st} | Receita: ${BRL2(res.rec[i])} | Meta: ${BRL2(p.metaOrcamento[i])} | Δ: ${BRL2(res.rec[i]-p.metaOrcamento[i])} (${PCTS((res.rec[i]-p.metaOrcamento[i])/p.metaOrcamento[i])})\n`;
+  });
+
+  summary += `
+TAXAS DE EVASÃO:
+- Captados M1: ${PCT(p.evasaoCaptadosM1||0)}
+- Captados M2: ${PCT(p.evasaoCaptadosM2||0)}
+- Captados geral/M3+: ${PCT(p.evasaoCaptados||0)}
+- Carregados intra: ${PCT(p.evasaoCarregados||p.evasaoCarregadosIntra||0)}
+${p.evasaoCarregadosInter ? `- Carregados inter: ${PCT(p.evasaoCarregadosInter)}` : ''}
+
+CAPTADOS BUDGET ABR-DEZ: ${(p.captadosBudgetPorMes||[]).slice(3).join(', ')}
+TM CAPTADOS ENTRADA ABR-DEZ: ${(p.ticketMedioCaptadosEntrada||[]).slice(3).map(v=>BRL2(v)).join(', ')}
+TM CAPTADOS SUBSEQUENTE: ${BRL2(p.ticketMedioCaptadosSub||0)}
+AJUSTE CAPTAÇÃO ATUAL: ${PCTS((p.ajusteCaptacao||1)-1)}`;
+
+  return summary;
+}
+
+async function runAI(){
+  const buId = activeBU();
+  const st = _ai(buId);
+  if(st.loading) return;
+  st.loading=true; st.show=true; st.result=null;
+  render();
+
+  const _isConsol = buId==='gme-consolidado';
+  const res = _isConsol ? calcConsolidado() : (buId==='god' ? calculateForecastGOD(_params[buId]) : calculateForecast(_params[buId]));
+  const p   = _isConsol ? res : (_params[buId] || _params['pgo']);
+  const buNome = BU_NAMES[buId] || buId;
+
+  const totMeta     = p.metaOrcamento.reduce((a,b)=>a+b,0);
+  const totForecast = res.rec.reduce((a,b)=>a+b,0);
+
+  const forecastData = buildForecastSummary(p, res, buNome);
+
+  const prompt = `Você é um especialista em planejamento financeiro de instituições de ensino superior. Analise o forecast abaixo e retorne um JSON estruturado com recomendações REALISTAS e ESPECÍFICAS para esta BU.
+
+DADOS DO FORECAST:
+${forecastData}
+
+Retorne APENAS um JSON válido (sem markdown, sem explicação), com esta estrutura exata:
+{
+  "resumoExecutivo": "string — 2-3 frases contextualizadas com os números reais desta BU",
+  "gapTotal": number,
+  "forecastAtual": number,
+  "metaTotal": number,
+  "alavancas": [
+    {
+      "nome": "string",
+      "valorAtual": "string",
+      "valorSugerido": "string",
+      "impactoReceita": number,
+      "viabilidade": "alta" | "media" | "baixa",
+      "descricao": "string — explicação prática e específica com números reais"
+    }
+  ],
+  "captadosMensaisSugeridos": {
+    "abr": number, "mai": number, "jun": number, "jul": number,
+    "ago": number, "set": number, "out": number, "nov": number, "dez": number
+  },
+  "forecastComMudancas": number
+}
+
+REGRAS IMPORTANTES:
+- Sugestões de captação: máximo +30% acima do budget mensal — não invente números impossíveis
+- Se o forecast já supera a meta: foco em manutenção, riscos e o que pode cair
+- Se estiver abaixo: calcule quanto REALMENTE é recuperável com as alavancas
+- Se o gap for estrutural (base contratada insuficiente), diga isso claramente
+- impactoReceita deve ser o valor INCREMENTAL realista em R$, não o total
+- captadosMensaisSugeridos: quando já acima da meta, mantenha os valores do budget sem inflar
+- forecastComMudancas: simule o forecast COM as mudanças sugeridas aplicadas`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await resp.json();
+    const text = data.content?.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(text);
+
+    // Normaliza captadosMensaisSugeridos para array de 9 elementos
+    const keys = ['abr','mai','jun','jul','ago','set','out','nov','dez'];
+    const captSug = keys.map(k => parsed.captadosMensaisSugeridos[k] || 0);
+
+    st.result = {
+      resumoExecutivo:          parsed.resumoExecutivo,
+      gapTotal:                 parsed.gapTotal,
+      forecastAtual:            parsed.forecastAtual,
+      metaTotal:                parsed.metaTotal,
+      alavancas:                parsed.alavancas || [],
+      captadosMensaisSugeridos: captSug,
+      forecastComMudancas:      parsed.forecastComMudancas,
+      _buId: buId,
+    };
+  } catch(e) {
+    console.error('AI error:', e);
+    st.result = {
+      resumoExecutivo: 'Erro ao processar análise. Tente novamente.',
+      gapTotal: totForecast - totMeta,
+      forecastAtual: totForecast,
+      metaTotal: totMeta,
+      alavancas: [],
+      captadosMensaisSugeridos: (p.captadosBudgetPorMes||[]).slice(3),
+      forecastComMudancas: totForecast,
+      _buId: buId,
+    };
+  }
+
+  st.loading = false;
+  render();
+}
+
+function applyAICaptados(){
+  const buId = activeBU();
+  const st = _ai(buId);
+  if(!st.result) return;
+  if(!_params[buId]) return;
+  const arr=[..._params[buId].captadosBudgetPorMes];
+  // captadosMensaisSugeridos é array de 9 (Abr-Dez)
+  st.result.captadosMensaisSugeridos.forEach((v,i)=>{ arr[i+3]=v; });
+  _params[buId].captadosBudgetPorMes=arr;
+  st.result=null; st.show=false;
+  render();
+}
+
+// ─── Partial re-render for sliders (avoids losing slider focus) ──────────────
+function updateSliderLive(key, val, sliderEl) {
+  const id = activeBU();
+  if (!_params[id]) return;
+  _params[id][key] = parseFloat(val);
+
+  // Update the label next to slider immediately
+  const lbl = document.getElementById('v-' + key);
+  if (lbl) lbl.textContent = PCTS(parseFloat(val) - 1);
+
+  // Recompute derived data
+  const isConsolidado = activeBU()==='gme-consolidado';
+  const res   = isConsolidado ? calcConsolidado() : (id==='god' ? calculateForecastGOD(_params[id]) : calculateForecast(_params[id]));
+  const pDisp = isConsolidado ? res : _params[id];
+  const totMeta     = res.metaOrcamento.reduce((a,b)=>a+b,0);
+  const totForecast = res.rec.reduce((a,b)=>a+b,0);
+  const gap         = totForecast - totMeta;
+
+  // Update sections that depend on slider (skip params section to keep focus)
+  const sc = document.getElementById('sec-scenarios');
+  if (sc) sc.innerHTML = renderScenarios(res, totMeta);
+  const gl = document.getElementById('sec-goal');
+  if (gl) gl.innerHTML = renderGoalBar(totMeta, totForecast, gap, res, pDisp);
+  const bk = document.getElementById('sec-breakdown');
+  if (bk) bk.innerHTML = renderBreakdown(res, pDisp, isConsolidado);
+  const ai = document.getElementById('sec-ai');
+  if (ai) ai.innerHTML = _ai(id).show ? renderAI(id) : '';
+  renderCharts(res);
+
+  // Update expand panels inside params section without re-rendering it
+  const newP = isConsolidado ? res : _params[id];
+  const existCapPanel = document.getElementById('expand-cap');
+  const existEvPanel  = document.getElementById('expand-ev');
+  const shouldShowCap = !isConsolidado && newP.ajusteCaptacao !== 1;
+  const shouldShowEv  = !isConsolidado && newP.ajusteEvasao  !== 1;
+
+  // Captação expand panel
+  if (shouldShowCap) {
+    const capHtml = buildCapExpandHTML(newP);
+    if (existCapPanel) existCapPanel.outerHTML = capHtml;
+    else {
+      // Insert after sliders-grid
+      const sg = document.querySelector('.sliders-grid');
+      if (sg) sg.insertAdjacentHTML('afterend', capHtml);
+    }
+  } else if (existCapPanel) {
+    existCapPanel.remove();
+  }
+
+  // Evasão expand panel
+  if (shouldShowEv) {
+    const defaultP = DEFAULT_FN[id]?.();
+    const evHtml = defaultP ? buildEvExpandHTML(newP, defaultP) : '';
+    if (evHtml) {
+      if (existEvPanel) existEvPanel.outerHTML = evHtml;
+      else {
+        const sg = document.querySelector('.sliders-grid');
+        const cp = document.getElementById('expand-cap');
+        const anchor = cp || sg;
+        if (anchor) anchor.insertAdjacentHTML('afterend', evHtml);
+      }
+    }
+  } else if (existEvPanel) {
+    existEvPanel.remove();
+  }
+}
+
+function buildCapExpandHTML(p) {
+  const items = p.captadosBudgetPorMes.slice(3).map((v,i)=>{
+    const bud=v, adj=Math.round(v*p.ajusteCaptacao), diff=adj-bud;
+    const cls=diff>0?'pos':diff<0?'neg':'';
+    return `<div class="ec-item"><div class="ec-mes">${MESES_ABR_DEZ[i]}</div><div class="ec-budget">${N(bud)}</div><div class="ec-adj">${N(adj)}</div>${diff!==0?`<div class="ec-diff ${cls}">${diff>0?'+':''}${N(diff)}</div>`:'<div class="ec-diff">±0</div>'}</div>`;
+  }).join('');
+  return `<div class="expand-panel" id="expand-cap"><div class="expand-title">Captados Abr-Dez: Budget → Ajustado (${PCTS(p.ajusteCaptacao-1)})</div><div class="expand-grid">${items}</div></div>`;
+}
+
+function buildEvExpandHTML(p, defaultP) {
+  const ajEv = p.ajusteEvasao;
+  const isGME = !!p._gmeIsSpecial;
+  const rates = isGME ? [
+    {lbl:'Evasão Intrasemestral', base:defaultP.evasaoCarregadosIntra||0, adj:(p.evasaoCarregadosIntra||0)*ajEv},
+    {lbl:'Evasão Intersemestral', base:defaultP.evasaoCarregadosInter||0, adj:(p.evasaoCarregadosInter||0)*ajEv},
+    {lbl:'Evasão M1',             base:defaultP.evasaoCaptadosM1,         adj:p.evasaoCaptadosM1*ajEv},
+    {lbl:'Evasão M2',             base:defaultP.evasaoCaptados,           adj:p.evasaoCaptados*ajEv},
+  ] : [
+    {lbl:'Captados M1',    base:defaultP.evasaoCaptadosM1, adj:p.evasaoCaptadosM1*ajEv},
+    {lbl:'Captados M2',    base:defaultP.evasaoCaptadosM2, adj:p.evasaoCaptadosM2*ajEv},
+    {lbl:'Captados Geral', base:defaultP.evasaoCaptados,   adj:p.evasaoCaptados*ajEv},
+    {lbl:'Carregados',     base:defaultP.evasaoCarregados||0, adj:(p.evasaoCarregados||0)*ajEv},
+  ];
+  const evItems=rates.map(r=>`<div class="ev-item"><div class="ev-from"><p class="ec-mes">${r.lbl}</p><div class="ev-old">${PCT(r.base)}</div></div><span class="ev-arrow">→</span><div class="ev-new" style="color:${ajEv<1?'var(--green)':'var(--red)'}">${PCT(r.adj)}</div></div>`).join('');
+  const gridCols = isGME ? 'repeat(4,1fr)' : 'repeat(4,1fr)';
+  return `<div class="ev-expand" id="expand-ev"><div class="expand-title" style="margin-bottom:8px">Evasão: Base → Ajustada (${PCTS(ajEv-1)})</div><div class="ev-grid" style="grid-template-columns:${gridCols}">${evItems}</div></div>`;
+}
+
+
+function updateGMEEvasaoM2(val){
+  const id=activeBU();
+  if(!_params[id]) return;
+  const n=parseFloat(val)/100;
+  if(!isNaN(n)){
+    _params[id].evasaoCaptados=n;
+    _params[id].evasaoCaptadosM2=n;
+  }
+  render();
+  requestAnimationFrame(()=>{ const el=document.getElementById('p-evasaoCaptados'); if(el){el.focus();el.select();} });
+}
+
+function updateGODParam(key, val) {
+  const id = activeBU();
+  if (!_params[id]) return;
+  const n = parseFloat(val);
+  if (isNaN(n)) return;
+  if (key === 'ticketMedioCarregados') {
+    _params[id].ticketMedioCarregados = Array(12).fill(n);
+  } else {
+    _params[id][key] = n;
+  }
+  render();
+  requestAnimationFrame(() => {
+    const el = document.getElementById('p-tmCarrGOD');
+    if (el) { el.focus(); el.select(); }
+  });
+}
+
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════════════
+function render(){
+  const id = activeBU();
+  const isConsolidado = id === 'gme-consolidado';
+  const st = _ai(id);
+  let res, pDisp;
+
+  if (isConsolidado) {
+    res   = calcConsolidado();
+    pDisp = res;
+  } else {
+    pDisp = getParams() || _params['pgo'];
+    res   = (id === 'god') ? calculateForecastGOD(pDisp) : calculateForecast(pDisp);
+  }
+
+  const totMeta     = res.metaOrcamento.reduce((a,b) => a+b, 0);
+  const totForecast = res.rec.reduce((a,b) => a+b, 0);
+  const gap         = totForecast - totMeta;
+
+  document.getElementById('hdr-sub').textContent = BU_NAMES[id] || '';
+
+  const html = `
+    <div id="sec-scenarios">${renderScenarios(res, totMeta)}</div>
+    <div id="sec-q1">${renderQ1(pDisp, res)}</div>
+    <div id="sec-params">${renderParams(pDisp, res, isConsolidado)}</div>
+    <div id="sec-goal">${renderGoalBar(totMeta, totForecast, gap, res, pDisp)}</div>
+    <div id="sec-ai">${st.show ? renderAI(id) : ''}</div>
+    <div id="sec-charts" class="charts-grid">
+      <div class="chart-card"><div class="chart-title">Receita Mensal: Forecast vs Meta</div><canvas id="ch-bar"></canvas></div>
+      <div class="chart-card"><div class="chart-title">Receita Acumulada</div><canvas id="ch-line"></canvas></div>
+    </div>
+    <div id="sec-breakdown">${renderBreakdown(res, pDisp, isConsolidado)}</div>
+  `;
+  document.getElementById('content').innerHTML = html;
+  renderCharts(res);
+}
+
+function renderScenarios(res,meta){
+  const f=(v,m)=>{const d=v-m,p=d/m;const cls=d<0?'neg':d>0?'pos':'neu';const s=(d>=0?'+':'')+((p)*100).toFixed(1)+'% vs Meta';return `<span class="badge ${cls}">${s}</span>`;};
+
+  // G. Odonto: coorte única em Jan → todos cenários = mesma projeção
+  if (res._isGOD) {
+    const tot = res.cenarioBase;
+    const d = tot - meta;
+    const cls = d>=0?'pos':'neg';
+    const pct = ((d/meta)*100).toFixed(1);
+    return `<div class="scenarios" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="sc" style="border-color:var(--blue-md)">
+        <div class="sc-hdr"><div class="sc-ico b">🎯</div><div class="sc-label">Orçamento 2026 (Meta)</div></div>
+        <div class="sc-val">${BRL2(meta)}</div>
+        <div class="sc-desc">Escrito em pedra — 3.416 captados Abr-Dez, TM médio R$ 2.082</div>
+        <span class="badge neu">Base</span>
+      </div>
+      <div class="sc" style="border-color:${d>=0?'var(--green)':'var(--red)'};background:${d>=0?'var(--green-lt)':'var(--red-lt)'}">
+        <div class="sc-hdr"><div class="sc-ico o">📈</div><div class="sc-label">Forecast 2026</div></div>
+        <div class="sc-val" style="color:${d>=0?'var(--green)':'var(--red)'}">${BRL2(tot)}</div>
+        <div class="sc-desc">Q1 realizado + base Din Fat + captados projetados Abr-Dez</div>
+        <span class="badge ${d>=0?'pos':'neg'}">${d>=0?'+':''}${pct}% vs Meta</span>
+      </div>
+      <div class="sc">
+        <div class="sc-hdr"><div class="sc-ico c">📋</div><div class="sc-label">Captados Q1 2026</div></div>
+        <div class="sc-val" style="font-size:18px;padding-top:4px">
+          <span style="color:var(--blue);font-weight:700;font-size:28px">2.725</span>
+          <span style="font-size:14px;color:var(--muted)"> realizados</span>
+        </div>
+        <div class="sc-desc">Jan: 64 · Fev: 794 · Mar: 1.867 — Orçamento: 1.873</div>
+        <span class="badge pos">+852 alunos (+45.5%)</span>
+      </div>
+    </div>`;
+  }
+
+  // PG Odontologia: Orçamento | Forecast (dinâmico) | Captados Q1
+  if (res._isPGO) {
+    const tot = res.cenarioBase;
+    const d   = tot - meta;
+    const dCls   = d >= 0 ? 'pos' : 'neg';
+    const dColor = d >= 0 ? 'var(--green)' : 'var(--red)';
+    const dBg    = d >= 0 ? 'var(--green-lt)' : 'var(--red-lt)';
+    const pct    = ((d / meta) * 100).toFixed(1);
+
+    const p = res._p;
+    const captReal   = p ? p.q1Real.captados.reduce((a,b)=>a+b,0) : 2725;
+    const captBudget = p ? p.captadosBudgetPorMes.slice(0,3).reduce((a,b)=>a+b,0) : 1873;
+    const captDiff   = captReal - captBudget;
+    const captPct    = captBudget > 0 ? ((captDiff / captBudget) * 100).toFixed(1) : '0';
+
+    return `<div class="scenarios" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="sc" style="border-color:var(--blue-md)">
+        <div class="sc-hdr"><div class="sc-ico b">🎯</div><div class="sc-label">Orçamento 2026 (Meta)</div></div>
+        <div class="sc-val">${BRL2(meta)}</div>
+        <div class="sc-desc">Escrito em pedra — base contratada + captados orçados Abr-Dez</div>
+        <span class="badge neu">Base</span>
+      </div>
+      <div class="sc" style="border-color:${dColor};background:${dBg}">
+        <div class="sc-hdr"><div class="sc-ico ${d>=0?'o':'c'}">📈</div><div class="sc-label">Forecast 2026</div></div>
+        <div class="sc-val" style="color:${dColor}">${BRL2(tot)}</div>
+        <div class="sc-desc">Q1 realizado + base Din Fat + captados projetados Abr-Dez</div>
+        <span class="badge ${dCls}">${pct>=0?'+':''}${pct}% vs Meta</span>
+      </div>
+      <div class="sc">
+        <div class="sc-hdr"><div class="sc-ico c">📋</div><div class="sc-label">Captados Q1 2026</div></div>
+        <div class="sc-val" style="font-size:18px;padding-top:4px">
+          <span style="color:var(--blue);font-weight:700;font-size:28px">${N(captReal)}</span>
+          <span style="font-size:14px;color:var(--muted)"> realizados</span>
+        </div>
+        <div class="sc-desc">Jan: ${N(p?p.q1Real.captados[0]:64)} · Fev: ${N(p?p.q1Real.captados[1]:794)} · Mar: ${N(p?p.q1Real.captados[2]:1867)} — Orçamento: ${N(captBudget)}</div>
+        <span class="badge ${captDiff>=0?'pos':'neg'}">${captDiff>=0?'+':''}${N(captDiff)} alunos (${captPct>=0?'+':''}${captPct}%)</span>
+      </div>
+    </div>`;
+  }
+
+  // G. Medicina: layout igual ao PGO
+  if (res._isGME) {
+    const tot = res.cenarioBase;
+    const d = tot - meta;
+    const dCls = d >= 0 ? 'pos' : 'neg';
+    const dBorderColor = d >= 0 ? 'var(--green)' : 'var(--red)';
+    const dBg = d >= 0 ? 'var(--green-lt)' : 'var(--red-lt)';
+    const dValColor = d >= 0 ? 'var(--green)' : 'var(--red)';
+    const pct = ((d/meta)*100).toFixed(1);
+
+    // Captados Q1: totais reais vs orçamento
+    const isConsol = res._isConsolidado;
+    const captReal  = isConsol
+      ? res.q1Real.captados.reduce((a,b)=>a+b,0)
+      : (res._p ? res._p.q1Real.captados.reduce((a,b)=>a+b,0) : 0);
+    const captBudget = isConsol
+      ? GME_FILIAL_IDS.reduce((s,id)=>s+_params[id].captadosBudgetPorMes.slice(0,3).reduce((a,b)=>a+b,0),0)
+      : 0;
+    const captDiff = captReal - captBudget;
+    const captDiffCls = captDiff >= 0 ? 'pos' : 'neg';
+
+    // Q1 realized revenue
+    const q1RealizadoTotal = isConsol
+      ? GME_FILIAL_IDS.reduce((s,id)=>s+_params[id].receitaRealizada.reduce((a,b)=>a+b,0),0)
+      : 0;
+    const q1MetaTotal = isConsol
+      ? GME_FILIAL_IDS.reduce((s,id)=>s+_params[id].metaOrcamento.slice(0,3).reduce((a,b)=>a+b,0),0)
+      : 0;
+    const q1Diff = q1RealizadoTotal - q1MetaTotal;
+    const q1DiffCls = q1Diff >= 0 ? 'pos' : 'neg';
+    const q1DiffStr = (q1Diff>=0?'+':'-')+'R$ '+Math.abs(Math.round(q1Diff)).toLocaleString('pt-BR');
+
+    // Third card: for consolidado show Q1 revenue vs meta; for individual show captados
+    const thirdCard = isConsol
+      ? `<div class="sc">
+          <div class="sc-hdr"><div class="sc-ico c">📊</div><div class="sc-label">Q1 Realizado</div></div>
+          <div class="sc-val" style="font-size:20px">${BRL2(q1RealizadoTotal)}</div>
+          <div class="sc-desc">Jan+Fev+Mar realizados — Meta Q1: ${BRL2(q1MetaTotal)}</div>
+          <span class="badge ${q1DiffCls}">${q1DiffStr} vs Meta Q1</span>
+        </div>`
+      : `<div class="sc">
+          <div class="sc-hdr"><div class="sc-ico c">📋</div><div class="sc-label">Captados Q1 2026</div></div>
+          <div class="sc-val" style="font-size:18px;padding-top:4px">
+            <span style="color:var(--blue);font-weight:700;font-size:28px">${captReal}</span>
+            <span style="font-size:14px;color:var(--muted)"> realizados</span>
+          </div>
+          <div class="sc-desc">Jan+Fev+Mar — Orçamento: ${captBudget} alunos</div>
+          ${captBudget>0 ? `<span class="badge ${captDiffCls}">${captDiff>=0?'+':''}${captDiff} alunos vs Budget</span>` : '<span class="badge neu">Base</span>'}
+        </div>`;
+
+    return `<div class="scenarios" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="sc" style="border-color:var(--blue-md)">
+        <div class="sc-hdr"><div class="sc-ico b">🎯</div><div class="sc-label">Orçamento 2026 (Meta)</div></div>
+        <div class="sc-val">${BRL2(meta)}</div>
+        <div class="sc-desc">Escrito em pedra — base contratada + captados orçados</div>
+        <span class="badge neu">Base</span>
+      </div>
+      <div class="sc" style="border-color:${dBorderColor};background:${dBg}">
+        <div class="sc-hdr"><div class="sc-ico ${d>=0?'o':'c'}">📈</div><div class="sc-label">Forecast 2026</div></div>
+        <div class="sc-val" style="color:${dValColor}">${BRL2(tot)}</div>
+        <div class="sc-desc">Q1 realizado + projeção Abr-Dez com base contratada e captados</div>
+        <span class="badge ${dCls}">${pct>=0?'+':''}${pct}% vs Meta</span>
+      </div>
+      ${thirdCard}
+    </div>`;
+  }
+
+  return `<div class="scenarios">
+    <div class="sc"><div class="sc-hdr"><div class="sc-ico c">📉</div><div class="sc-label">Conservador</div></div>
+      <div class="sc-val">${BRL2(res.cenarioConservador)}</div>
+      <div class="sc-desc">Apenas base contratada (zero novos captados Abr-Dez)</div>${f(res.cenarioConservador,meta)}</div>
+    <div class="sc"><div class="sc-hdr"><div class="sc-ico b">🎯</div><div class="sc-label">Base (Budget)</div></div>
+      <div class="sc-val">${BRL2(res.cenarioBase)}</div>
+      <div class="sc-desc">Novos captados conforme projeção budget</div>${f(res.cenarioBase,meta)}</div>
+    <div class="sc"><div class="sc-hdr"><div class="sc-ico o">📈</div><div class="sc-label">Otimista (+10%)</div></div>
+      <div class="sc-val">${BRL2(res.cenarioOtimista)}</div>
+      <div class="sc-desc">Captados 10% acima do budget</div>${f(res.cenarioOtimista,meta)}</div>
+  </div>`;
+}
+
+function renderQ1(p,res){
+  const q=p.q1Real;
+  // Para GOD: captados[0]=75 (Jan), [1]=0, [2]=0 → total=75 vs budget=60
+  // Para outros BUs: captados são novos entrantes por mês
+  const captQ1r=q.captados.reduce((a,b)=>a+b,0);
+  const captQ1b = p._godIsSpecial
+    ? (p.captadosBudgetPorMes[0] || 0)          // GOD: só Jan entra
+    : p.captadosBudgetPorMes.slice(0,3).reduce((a,b)=>a+b,0);
+  const carrQ1r=q.carregados.reduce((a,b)=>a+b,0);
+  const carrQ1b = p._godIsSpecial
+    ? p.alunosCarregados.slice(0,3).reduce((a,b)=>a+b,0)
+    : p.alunosCarregados.slice(0,3).reduce((a,b)=>a+b,0);
+  const avgTmR=Math.round(q.tmCaptados.reduce((a,b)=>a+b,0)/3);
+  const avgTmB=Math.round(p.ticketMedioCaptadosEntrada.slice(0,3).reduce((a,b)=>a+b,0)/3);
+  const capPct=res.q1Comparison.captacaoFactor;
+  const pctCls=capPct>1.01?'pos':capPct<0.99?'neg':'neu';
+  const pctTxt=(capPct>=1?'+':'')+((capPct-1)*100).toFixed(1)+'% vs Budget';
+  const captLbl = p._godIsSpecial ? 'Captados S1 (Jan)' : 'Captados';
+
+  const mRow=(lbl,icon,rs,bs,rTot,bTot,fmt=v=>N(v))=>`
+    <tr><td><span class="row-icon">${icon}</span>${lbl}</td>
+      ${rs.map((r,i)=>`<td class="real">${fmt(r)}</td><td class="budget">${fmt(bs[i])}</td>`).join('')}
+      <td class="real q1-total">${fmt(rTot)}</td><td class="budget">${fmt(bTot)}</td>
+    </tr>`;
+
+  return `<div class="card"><div class="card-body">
+    <div class="card-hdr">
+      <div class="card-title"><span class="card-icon">📊</span>Q1 Realizado vs Budget</div>
+      <span class="badge ${pctCls}">${pctTxt}</span>
+    </div>
+    <table class="q1-tbl">
+      <thead>
+        <tr><th></th><th class="th-month" colspan="2">Jan</th><th class="th-month" colspan="2">Fev</th><th class="th-month" colspan="2">Mar</th><th class="th-month" colspan="2">Total Q1</th></tr>
+        <tr><th></th>${[0,1,2,3].map(()=>'<th class="real">Real</th><th class="budget">Budget</th>').join('')}</tr>
+      </thead>
+      <tbody>
+        ${mRow(captLbl,'👤',q.captados,p._godIsSpecial?[p.captadosBudgetPorMes[0],0,0]:p.captadosBudgetPorMes.slice(0,3),captQ1r,captQ1b)}
+        ${mRow('Carregados','🔁',q.carregados,p.alunosCarregados.slice(0,3),carrQ1r,carrQ1b)}
+        ${mRow('TM Captados','💰',q.tmCaptados,p.ticketMedioCaptadosEntrada.slice(0,3),avgTmR,avgTmB,v=>'R$ '+Math.round(v).toLocaleString('pt-BR'))}
+      </tbody>
+    </table>
+  </div></div>`;
+}
+
+function renderParams(p,res,isConsolidado){
+  if(isConsolidado){
+    const ids=['gme-campinas','gme-limeira','gme-araras','gme-fms'];
+    const nms=['Campinas','Limeira','Araras','FMS'];
+    const rows=ids.map((id,i)=>{
+      const q=_params[id];
+      const m=q.metaOrcamento.reduce((a,b)=>a+b,0);
+      return `<tr>
+        <td style="font-weight:600">${nms[i]}</td>
+        <td>${PCT(q.evasaoCarregadosIntra||0)}</td>
+        <td>${PCT(q.evasaoCarregadosInter||0)}</td>
+        <td>${PCT(q.evasaoCaptadosM1)}</td>
+        <td>${PCT(q.evasaoCaptados)}</td>
+        <td>R$ ${q.ticketMedioCaptadosSub.toLocaleString('pt-BR')}</td>
+        <td style="color:var(--blue);font-weight:600">${BRL2(m)}</td>
+      </tr>`;
+    }).join('');
+    const totM=ids.reduce((s,id)=>s+_params[id].metaOrcamento.reduce((a,b)=>a+b,0),0);
+    return `<div class="card"><div class="card-body">
+      <div class="card-hdr"><div class="card-title"><span class="card-icon">⚙️</span>Parâmetros por Filial</div></div>
+      <table class="bk-tbl"><thead><tr>
+        <th style="text-align:left">Filial</th>
+        <th>Ev. Intrasemestral</th>
+        <th>Ev. Intersemestral</th>
+        <th>Ev. M1</th>
+        <th>Ev. M2</th>
+        <th>TM Captados</th>
+        <th>Meta Anual</th>
+      </tr></thead>
+      <tbody>${rows}<tr><td>TOTAL</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td style="color:var(--blue);font-weight:700">${BRL2(totM)}</td></tr></tbody></table>
+    </div></div>`;
+  }
+
+  // ── G. Odonto: parâmetros específicos para coorte única ────────────────────
+  if (p._godIsSpecial) {
+    const tmCarr = p.ticketMedioCarregados[0];
+    const tmCap  = p.ticketMedioCaptadosSub;
+    const evIntra = (p.evasaoCaptadosM1*100).toFixed(3);
+    const evInter = (p.evasaoCaptadosM2*100).toFixed(3);
+    const ajEv = p.ajusteEvasao;
+    const defaultP = DEFAULT_FN['god']?.();
+
+    const evPanel = ajEv !== 1 && defaultP ? buildEvExpandHTML(p, defaultP) : '';
+    const expanded_section = _expanded ? `
+      <div class="monthly-inputs" style="margin-top:14px">
+        <div style="background:var(--blue-lt);border:1px solid var(--blue-md);border-radius:var(--r);padding:12px 14px;margin-bottom:10px">
+          <div style="font-size:12px;font-weight:600;margin-bottom:8px">📊 Estado Realizado (fim de Mar/26)</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;font-size:11px">
+            <div><span style="color:var(--muted)">Carregados saldo</span><br><strong>${p._godCarrMarFim} alunos</strong></div>
+            <div><span style="color:var(--muted)">Captados saldo</span><br><strong>${p._godCapMarFim} alunos</strong></div>
+            <div><span style="color:var(--muted)">TM Carregados realiz.</span><br><strong>R$ ${p.q1Real.tmCarregados[2].toLocaleString('pt-BR')}</strong></div>
+            <div><span style="color:var(--muted)">TM Captados</span><br><strong>R$ ${p.ticketMedioCaptadosSub.toLocaleString('pt-BR')}</strong></div>
+          </div>
+        </div>
+      </div>` : '';
+
+    return `<div class="card"><div class="card-body">
+      <div class="card-hdr">
+        <div class="card-title"><span class="card-icon">⚙️</span>Parâmetros do Forecast</div>
+        <div style="display:flex;gap:7px">
+          <button class="btn-sm" onclick="resetParams()">↺ Reset</button>
+          <button class="btn-sm" onclick="_expanded=!_expanded;render()">${_expanded?'▲ Fechar':'▾ Expandir'}</button>
+        </div>
+      </div>
+      <div class="params-grid">
+        <div class="param-item">
+          <label>TM Carregados Abr-Dez (R$)</label>
+          <input id="p-tmCarrGOD" type="number" value="${tmCarr}" onchange="updateGODParam('ticketMedioCarregados',this.value)">
+        </div>
+        <div class="param-item">
+          <label>TM Captados Abr-Dez (R$)</label>
+          <input id="p-ticketMedioCaptadosSub" type="number" value="${tmCap}" onchange="updateParam('ticketMedioCaptadosSub',this.value)">
+        </div>
+        <div class="param-item">
+          <label>Evasão Intrasemestral (%)</label>
+          <input id="p-evasaoCaptadosM1" type="number" step="0.001" value="${evIntra}" onchange="updateParamRate('evasaoCaptadosM1',this.value)">
+        </div>
+        <div class="param-item">
+          <label>Evasão Intersemestral (%)</label>
+          <input id="p-evasaoCaptadosM2" type="number" step="0.001" value="${evInter}" onchange="updateParamRate('evasaoCaptadosM2',this.value)">
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <div class="sl-item">
+          <div class="sl-lbl">
+            <span>Ajuste Evasão <span class="sl-val" id="v-ajusteEvasao">${PCTS(ajEv-1)}</span></span>
+            ${ajEv!==1?`<button class="btn-link" onclick="updateSlider('ajusteEvasao',1)">Resetar</button>`:''}
+          </div>
+          <div class="sl-track">
+            <span>-100%</span>
+            <input id="sl-ajusteEvasao" type="range" min="0" max="200" step="5" value="${Math.round(ajEv*100)}" oninput="updateSliderLive('ajusteEvasao',this.value/100,this)">
+            <span>+100%</span>
+          </div>
+          <div class="sl-hints"><span>0% (sem evasão)</span><span>Base</span><span>+100%</span></div>
+        </div>
+      </div>
+      ${evPanel}
+      ${expanded_section}
+    </div></div>`;
+  }
+
+  const aj=p.ajusteCaptacao, ajEv=p.ajusteEvasao;
+  const showCap=aj!==1, showEv=ajEv!==1;
+  const defaultP=DEFAULT_FN[activeBU()]?.();
+
+  // Captação expand panel
+  let capPanel = showCap ? buildCapExpandHTML(p) : '';
+  let evPanel  = (showEv && defaultP) ? buildEvExpandHTML(p, defaultP) : '';
+
+  // Expanded monthly inputs
+  let monthlySection='';
+  if(_expanded){
+    const capInputs=MESES.map((m,i)=>`<div class="mi-item"><label>${m}</label><input type="number" value="${p.captadosBudgetPorMes[i]}" ${i<3?'disabled':''} onchange="updateArrayVal('captadosBudgetPorMes',${i},this.value)"></div>`).join('');
+    const tmInputs=MESES.map((m,i)=>`<div class="mi-item"><label>${m}</label><input type="number" value="${p.ticketMedioCaptadosEntrada[i]}" ${i<3?'disabled':''} onchange="updateArrayVal('ticketMedioCaptadosEntrada',${i},this.value)"></div>`).join('');
+    monthlySection=`
+      <div class="monthly-inputs"><label>Captados Budget por Mês</label><div class="monthly-grid">${capInputs}</div></div>
+      <div class="monthly-inputs" style="margin-top:10px"><label>Ticket Médio Captados (Entrada)</label><div class="monthly-grid">${tmInputs}</div></div>`;
+  }
+
+  const capPctLbl=PCTS(aj-1);
+  const evPctLbl=PCTS(ajEv-1);
+  const capFactor=res.q1Comparison.captacaoFactor;
+
+  // ── G. Medicina: 4 taxas de evasão exatas da planilha ──
+  const evasaoFields = p._gmeIsSpecial ? `
+    <div class="params-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="param-item">
+        <label>Evasão Intrasemestral (%)<span style="display:block;font-size:9px;color:var(--faint)">carregados — meses regulares</span></label>
+        <input id="p-evasaoCarregadosIntra" type="number" step="0.001" value="${((p.evasaoCarregadosIntra||0)*100).toFixed(3)}" onchange="updateParamRate('evasaoCarregadosIntra',this.value)">
+      </div>
+      <div class="param-item">
+        <label>Evasão Intersemestral (%)<span style="display:block;font-size:9px;color:var(--faint)">carregados — Jun e Dez</span></label>
+        <input id="p-evasaoCarregadosInter" type="number" step="0.001" value="${((p.evasaoCarregadosInter||0)*100).toFixed(3)}" onchange="updateParamRate('evasaoCarregadosInter',this.value)">
+      </div>
+      <div class="param-item">
+        <label>Evasão M1 (%)<span style="display:block;font-size:9px;color:var(--faint)">captados — 1º mês após entrada</span></label>
+        <input id="p-evasaoCaptadosM1" type="number" step="0.001" value="${(p.evasaoCaptadosM1*100).toFixed(3)}" onchange="updateParamRate('evasaoCaptadosM1',this.value)">
+      </div>
+      <div class="param-item">
+        <label>Evasão M2 (%)<span style="display:block;font-size:9px;color:var(--faint)">captados — meses seguintes</span></label>
+        <input id="p-evasaoCaptados" type="number" step="0.001" value="${(p.evasaoCaptados*100).toFixed(3)}" onchange="updateGMEEvasaoM2(this.value)">
+      </div>
+    </div>` : `
+    <div class="params-grid">
+      <div class="param-item"><label>Evasão Captados M1 (%)</label><input id="p-evasaoCaptadosM1" type="number" step="0.01" value="${(p.evasaoCaptadosM1*100).toFixed(2)}" onchange="updateParamRate('evasaoCaptadosM1',this.value)"></div>
+      <div class="param-item"><label>Evasão Captados M2 (%)</label><input id="p-evasaoCaptadosM2" type="number" step="0.01" value="${(p.evasaoCaptadosM2*100).toFixed(2)}" onchange="updateParamRate('evasaoCaptadosM2',this.value)"></div>
+      <div class="param-item"><label>Evasão Captados (%)</label><input id="p-evasaoCaptados" type="number" step="0.01" value="${(p.evasaoCaptados*100).toFixed(2)}" onchange="updateParamRate('evasaoCaptados',this.value)"></div>
+      <div class="param-item"><label>Evasão Carregados (%)</label><input id="p-evasaoCarregados" type="number" step="0.01" value="${((p.evasaoCarregados||0)*100).toFixed(2)}" onchange="updateParamRate('evasaoCarregados',this.value)"></div>
+    </div>`;
+
+  return `<div class="card"><div class="card-body">
+    <div class="card-hdr">
+      <div class="card-title"><span class="card-icon">⚙️</span>Parâmetros do Forecast</div>
+      <div style="display:flex;gap:7px">
+        <button class="btn-sm" onclick="resetParams()">↺ Reset</button>
+        <button class="btn-sm" onclick="_expanded=!_expanded;render()">${_expanded?'▲ Fechar':'▾ Expandir'}</button>
+      </div>
+    </div>
+    ${evasaoFields}
+    <div class="sliders-grid" style="margin-top:14px">
+      <div class="param-item"><label>TM Captados Subsequente (R$)</label><input id="p-ticketMedioCaptadosSub" type="number" value="${p.ticketMedioCaptadosSub}" onchange="updateParam('ticketMedioCaptadosSub',this.value)"></div>
+      <div class="sl-item">
+        <div class="sl-lbl">
+          <span>Ajuste Captação Abr-Dez <span class="sl-val" id="v-ajusteCaptacao">${capPctLbl}</span></span>
+          ${capFactor!==1?`<button class="btn-link" onclick="applyQ1Tendency()">Usar tendência Q1 (${PCTS(capFactor-1)})</button>`:''}
+        </div>
+        <div class="sl-track"><span>-50%</span><input id="sl-ajusteCaptacao" type="range" min="50" max="200" step="1" value="${Math.round(aj*100)}" oninput="updateSliderLive('ajusteCaptacao',this.value/100,this)"><span>+100%</span></div>
+        <div class="sl-hints"><span>Budget</span><span></span></div>
+      </div>
+      <div class="sl-item">
+        <div class="sl-lbl">
+          <span>Ajuste Evasão <span class="sl-val" id="v-ajusteEvasao">${evPctLbl}</span></span>
+          ${ajEv!==1?`<button class="btn-link" onclick="updateSlider('ajusteEvasao',1)">Resetar</button>`:''}
+        </div>
+        <div class="sl-track"><span>-100%</span><input id="sl-ajusteEvasao" type="range" min="0" max="200" step="5" value="${Math.round(ajEv*100)}" oninput="updateSliderLive('ajusteEvasao',this.value/100,this)"><span>+100%</span></div>
+        <div class="sl-hints"><span>100% (sem evasão)</span><span>Base</span><span>+100%</span></div>
+      </div>
+    </div>
+    ${capPanel}${evPanel}${monthlySection}
+  </div></div>`;
+}
+
+function renderGoalBar(meta,forecast,gap,res,p){
+  const buId = activeBU();
+  const st = _ai(buId);
+  const gapCls=gap>=0?'gap-pos':'gap-neg';
+  const pct=(gap/meta*100).toFixed(1);
+  const pctBadgeCls=gap<0?'neg':gap>0?'pos':'neu';
+  const gapFmt=(gap>=0?'+R$ ':'-R$ ')+Math.abs(Math.round(gap)).toLocaleString('pt-BR');
+  const isGOD = res && res._isGOD;
+  const aiLabel = isGOD && gap > 0 ? '✦ Analisar Resultado' : '✦ Como atingir a meta?';
+  return `<div class="card"><div class="card-body">
+    <div class="goal-bar">
+      <div class="goal-item"><div class="lbl">Meta Anual</div><div class="val">${BRL2(meta)}</div></div>
+      <div class="goal-arrow">→</div>
+      <div class="goal-item"><div class="lbl">Forecast Atual</div><div class="val">${BRL2(forecast)}</div></div>
+      <div class="goal-arrow">→</div>
+      <div class="goal-item"><div class="lbl">Gap</div><div class="val ${gapCls}">${gapFmt}</div></div>
+      <span class="badge ${pctBadgeCls}">${(pct>=0?'+':'')+pct}% vs Meta</span>
+      <button class="btn-ai ${st.loading?'loading':''}" onclick="runAI()">
+        ${st.loading?'<div class="spin"></div> Analisando...':aiLabel}
+      </button>
+    </div>
+  </div></div>`;
+}
+
+function renderAI(buId){
+  buId = buId || activeBU();
+  const st = _ai(buId);
+  if(st.loading) return `<div class="ai-panel">
+    <div class="ai-panel-hdr"><div class="title">✦ Plano para Atingir a Meta</div></div>
+    <div class="ai-panel-body"><div class="ai-loading"><div class="spin" style="width:18px;height:18px;border-width:3px"></div><span>Analisando dados e calculando cenários...</span></div></div>
+  </div>`;
+
+  if(!st.result) return '';
+  const r=st.result;
+  const gapCls=r.gapTotal>=0?'gap-pos':'gap-neg';
+  const finalVsMeta=((r.forecastComMudancas-r.metaTotal)/r.metaTotal*100).toFixed(1);
+  const finalCls=r.forecastComMudancas>=r.metaTotal?'gap-pos':'gap-neg';
+
+  const alavancaRows=r.alavancas.map(a=>`
+    <tr>
+      <td><div class="ala-name">${a.nome}</div><div class="ala-desc">${a.descricao}</div></td>
+      <td style="font-family:var(--mono)">${a.valorAtual}</td>
+      <td style="font-size:11px;color:var(--muted)">→</td>
+      <td style="font-family:var(--mono);font-weight:600;color:var(--blue)">${a.valorSugerido}</td>
+      <td style="font-family:var(--mono);font-weight:600;color:var(--green)">+${BRL2(a.impactoReceita)}</td>
+      <td><span class="via-pill via-${a.viabilidade}">${a.viabilidade}</span></td>
+    </tr>`).join('');
+
+  const pForAI = _params[buId] || getParams();
+  const capItems=MESES_ABR_DEZ.map((m,i)=>{
+    const bud=pForAI ? pForAI.captadosBudgetPorMes[i+3] : 0;
+    const sug=r.captadosMensaisSugeridos[i], diff=sug-bud;
+    const cls=diff>0?'pos':diff<0?'neg':'';
+    return `<div class="cs-item">
+      <div class="cs-mes">${m}</div>
+      <div class="cs-budget">${N(bud)}</div>
+      <div class="cs-arrow">↓</div>
+      <div class="cs-sug">${N(sug)}</div>
+      ${diff!==0?`<div class="cs-diff ${cls}">${diff>0?'+':''}${N(diff)}</div>`:''}
+    </div>`;
+  }).join('');
+
+  return `<div class="ai-panel">
+    <div class="ai-panel-hdr">
+      <div class="title">✦ Plano para Atingir a Meta</div>
+      <button class="btn-close" onclick="_ai('${buId}').show=false;_ai('${buId}').result=null;render()">✕</button>
+    </div>
+    <div class="ai-panel-body">
+      <div class="ai-section">
+        <div class="ai-summary">${r.resumoExecutivo}</div>
+      </div>
+      <div class="ai-section">
+        <div class="ai-3cols">
+          <div class="ai-col"><div class="lbl">Forecast Atual</div><div class="vl">${BRL2(r.forecastAtual)}</div></div>
+          <div class="ai-col"><div class="lbl">Meta</div><div class="vl">${BRL2(r.metaTotal)}</div></div>
+          <div class="ai-col ${r.gapTotal>=0?'success':''}"><div class="lbl">Gap</div><div class="vl ${gapCls}">${r.gapTotal>=0?'+':''}${BRL2(r.gapTotal)}</div></div>
+        </div>
+      </div>
+      <div class="ai-section">
+        <div class="ai-section-title">📈 Alavancas para Fechar o Gap</div>
+        <div style="overflow-x:auto">
+          <table class="ala-tbl">
+            <thead><tr><th>Alavanca</th><th>Atual</th><th></th><th>Sugerido</th><th>Impacto</th><th>Viabilidade</th></tr></thead>
+            <tbody>${alavancaRows}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="ai-section">
+        <div class="ai-section-title" style="justify-content:space-between">
+          <span>⚡ Captados Mensais: Budget × Sugerido</span>
+          <button class="apply-btn" onclick="applyAICaptados()">✓ Aplicar Sugerido</button>
+        </div>
+        <div class="cap-sug-grid">${capItems}</div>
+      </div>
+      <div class="ai-final">
+        <div><div class="lbl">Forecast com Mudanças Aplicadas</div><div class="vl">${BRL2(r.forecastComMudancas)}</div></div>
+        <div style="text-align:right"><div class="lbl">vs Meta</div><div style="font-size:18px;font-weight:700;font-family:var(--mono)" class="${finalCls}">${finalVsMeta>=0?'+':''}${finalVsMeta}%</div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderBreakdown(res,p,isConsolidado){
+  if(isConsolidado) return renderBreakdownConsolidado(res,p);
+  const rows=res.rec.map((r,i)=>{
+    const d=r-p.metaOrcamento[i], dpct=(d/p.metaOrcamento[i]*100).toFixed(1);
+    const cls=d>=0?'delta-pos':'delta-neg';
+    const st=res.status[i]||( i<3?'REALIZADO':'FORECAST');
+    const stCls=st==='REALIZADO'?'status-r':'status-f';
+    const baseVal = i<3 ? res.recCarr[i] : res.baseContratada[i];
+    const capVal  = res.recCap[i];
+    return `<tr>
+      <td>${MESES[i]}</td>
+      <td><span class="${stCls}">${st}</span></td>
+      <td>${BRL2(baseVal)}</td>
+      <td>${BRL2(capVal)}</td>
+      <td class="rec-cell">${BRL2(r)}</td>
+      <td>${BRL2(p.metaOrcamento[i])}</td>
+      <td class="${cls}">${d>=0?'+R$ ':'-R$ '}${Math.abs(Math.round(d)).toLocaleString('pt-BR')}</td>
+      <td class="${cls}">${d>=0?'+':''}${dpct}%</td>
+    </tr>`;
+  }).join('');
+  const totR=res.rec.reduce((a,b)=>a+b,0), totM=p.metaOrcamento.reduce((a,b)=>a+b,0);
+  const totD=totR-totM, totCls=totD>=0?'delta-pos':'delta-neg';
+  return `<div class="card"><div class="card-body">
+    <div class="card-hdr"><div class="card-title">📋 Breakdown Mensal</div></div>
+    <div style="overflow-x:auto"><table class="bk-tbl">
+      <thead><tr><th style="text-align:left">Mês</th><th style="text-align:left">Status</th><th>Base Contratada</th><th>Novos Captados</th><th>Receita Forecast</th><th>Meta Orçamento</th><th>Δ vs Meta</th><th>Δ %</th></tr></thead>
+      <tbody>${rows}
+      <tr><td>TOTAL 2026</td><td></td><td>${BRL2(res.baseContratada.slice(3).reduce((a,b)=>a+b,0))}</td><td>${BRL2(res.recCap.slice(3).reduce((a,b)=>a+b,0))}</td><td>${BRL2(totR)}</td><td>${BRL2(totM)}</td><td class="${totCls}">${totD>=0?'+':'-'}R$ ${Math.abs(Math.round(totD)).toLocaleString('pt-BR')}</td><td class="${totCls}">${totD>=0?'+':''}${(totD/totM*100).toFixed(1)}%</td></tr>
+      </tbody>
+    </table></div>
+  </div></div>`;
+}
+
+function renderBreakdownConsolidado(res,p){
+  const ids=['gme-campinas','gme-limeira','gme-araras','gme-fms'];
+  const nms=['Campinas','Limeira','Araras','FMS'];
+  const filRes=ids.map(id=>calculateForecast(_params[id]));
+
+  const rows=res.rec.map((totRec,i)=>{
+    const st=i<3?'REALIZADO':'FORECAST';
+    const stCls=i<3?'status-r':'status-f';
+    const totM=p.metaOrcamento[i];
+    const d=totRec-totM, dCls=d>=0?'delta-pos':'delta-neg';
+    const filCells=filRes.map(fr=>`<td style="font-size:11px">${BRL2(fr.rec[i])}</td>`).join('');
+    return `<tr><td>${MESES[i]}</td><td><span class="${stCls}">${st}</span></td>${filCells}<td class="rec-cell">${BRL2(totRec)}</td><td>${BRL2(totM)}</td><td class="${dCls}">${d>=0?'+':'-'}R$ ${Math.abs(Math.round(d)).toLocaleString('pt-BR')}</td><td class="${dCls}">${d>=0?'+':''}${(d/totM*100).toFixed(1)}%</td></tr>`;
+  }).join('');
+  const totR=res.rec.reduce((a,b)=>a+b,0),totM=p.metaOrcamento.reduce((a,b)=>a+b,0);
+  const totD=totR-totM,totCls=totD>=0?'delta-pos':'delta-neg';
+  return `<div class="card"><div class="card-body">
+    <div class="card-hdr"><div class="card-title">📋 Breakdown Mensal — Consolidado</div></div>
+    <div style="overflow-x:auto"><table class="bk-tbl">
+      <thead>
+        <tr><th style="text-align:left">Mês</th><th style="text-align:left">Status</th>${nms.map(n=>`<th>${n}</th>`).join('')}<th>TOTAL Forecast</th><th>Meta Total</th><th>Δ vs Meta</th><th>Δ %</th></tr>
+      </thead>
+      <tbody>${rows}
+        <tr><td>TOTAL 2026</td><td></td>${filRes.map(fr=>`<td style="font-size:11px;font-weight:700">${BRL2(fr.rec.reduce((a,b)=>a+b,0))}</td>`).join('')}<td>${BRL2(totR)}</td><td>${BRL2(totM)}</td><td class="${totCls}">${totD>=0?'+':'-'}R$ ${Math.abs(Math.round(totD)).toLocaleString('pt-BR')}</td><td class="${totCls}">${totD>=0?'+':''}${(totD/totM*100).toFixed(1)}%</td></tr>
+      </tbody>
+    </table></div>
+  </div></div>`;
+}
+
+function renderCharts(res){
+  Object.values(_charts).forEach(c=>{try{c.destroy();}catch(e){}});
+  _charts={};
+  const labels=MESES;
+  const opts={responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:10,font:{size:10,family:'Inter'}}}},
+    scales:{y:{ticks:{font:{size:9},callback:v=>v>=1e6?'R$'+(v/1e6).toFixed(0)+'M':v>=1e3?'R$'+(v/1e3).toFixed(0)+'k':v},grid:{color:'#f1f5f9'}},x:{ticks:{font:{size:9}},grid:{display:false}}}};
+  const bar=document.getElementById('ch-bar');
+  if(bar) _charts.bar=new Chart(bar,{type:'bar',data:{labels,datasets:[
+    {label:'Forecast',data:res.rec,backgroundColor:'#3b82f6cc',borderRadius:3,order:2},
+    {label:'Meta Orçamento',data:res.metaOrcamento,backgroundColor:'#e2e8f0',borderRadius:3,order:3},
+  ]},options:{...opts}});
+  const line=document.getElementById('ch-line');
+  if(line) _charts.line=new Chart(line,{type:'line',data:{labels,datasets:[
+    {label:'Acumulado Forecast',data:res.accF,borderColor:'#3b82f6',backgroundColor:'#3b82f615',tension:.3,pointRadius:3,fill:true,borderWidth:2},
+    {label:'Acumulado Meta',data:res.accM,borderColor:'#94a3b8',borderDash:[4,4],tension:.3,pointRadius:2,fill:false,borderWidth:1.5},
+  ]},options:{...opts,scales:{...opts.scales,y:{...opts.scales.y,ticks:{...opts.scales.y.ticks,callback:v=>v>=1e6?'R$'+(v/1e6).toFixed(0)+'M':v}}}}});
+}
+
+// ═══════════════════════════════════════════════════════════
+//  EXPORT TO EXCEL
+// ═══════════════════════════════════════════════════════════
+function buildSheetData(buId, buName) {
+  const isConsol = buId === 'gme-consolidado';
+  const p = isConsol ? null : _params[buId];
+  const res = isConsol ? calcConsolidado()
+    : (buId === 'god' ? calculateForecastGOD(p) : calculateForecast(p));
+  const meta = isConsol ? res.metaOrcamento : p.metaOrcamento;
+
+  // Header row
+  const rows = [];
+  rows.push([buName, '', ...MESES, 'TOTAL 2026']);
+
+  // Section: Receita
+  rows.push(['']);
+  rows.push(['RECEITA', 'Status', ...MESES.map((_,i)=>i<3?'REALIZADO':'FORECAST'), '']);
+
+  // Forecast vs Meta
+  const totF = res.rec.reduce((a,b)=>a+b,0);
+  const totM = meta.reduce((a,b)=>a+b,0);
+  rows.push(['Forecast', '', ...res.rec, totF]);
+  rows.push(['Meta Orçamento', '', ...meta, totM]);
+
+  const delta = res.rec.map((r,i) => r - meta[i]);
+  const deltaPct = res.rec.map((r,i) => (r - meta[i]) / meta[i]);
+  rows.push(['Δ vs Meta (R$)', '', ...delta, totF - totM]);
+  rows.push(['Δ vs Meta (%)', '', ...deltaPct.map(v=>(v*100).toFixed(2)+'%'), ((totF-totM)/totM*100).toFixed(2)+'%']);
+
+  rows.push(['']);
+  rows.push(['COMPONENTES']);
+  rows.push(['Base Contratada / Carregados', '', ...res.recCarr.map((v,i)=>i<3?v:res.baseContratada[i]), '']);
+  rows.push(['Receita Captados', '', ...res.recCap, '']);
+
+  // Section: Parâmetros
+  if (p) {
+    rows.push(['']);
+    rows.push(['PARÂMETROS']);
+    rows.push(['Evasão Captados M1', (p.evasaoCaptadosM1*100).toFixed(3)+'%']);
+    rows.push(['Evasão Captados M2', (p.evasaoCaptadosM2*100).toFixed(3)+'%']);
+    rows.push(['Evasão Captados Geral', (p.evasaoCaptados*100).toFixed(3)+'%']);
+    rows.push(['Evasão Carregados', (p.evasaoCarregados*100).toFixed(3)+'%']);
+    rows.push(['TM Captados Entrada', '', ...p.ticketMedioCaptadosEntrada]);
+    rows.push(['TM Captados Subsequente', p.ticketMedioCaptadosSub]);
+    rows.push(['Captados Budget/Mês', '', ...p.captadosBudgetPorMes]);
+    if (p.ajusteCaptacao !== undefined) rows.push(['Ajuste Captação', (p.ajusteCaptacao*100).toFixed(1)+'%']);
+    if (p.ajusteEvasao   !== undefined) rows.push(['Ajuste Evasão',   (p.ajusteEvasao*100).toFixed(1)+'%']);
+  }
+
+  // If consolidado, add filial breakdown
+  if (isConsol) {
+    rows.push(['']);
+    rows.push(['BREAKDOWN POR FILIAL']);
+    rows.push(['Filial', 'Forecast Total', 'Meta Total', 'Δ (R$)', 'Δ (%)']);
+    GME_FILIAL_IDS.forEach((id, i) => {
+      const fp = _params[id];
+      const fr = calculateForecast(fp);
+      const fF = fr.rec.reduce((a,b)=>a+b,0);
+      const fM = fp.metaOrcamento.reduce((a,b)=>a+b,0);
+      rows.push([GME_FILIAL_NAMES[i], fF, fM, fF-fM, ((fF-fM)/fM*100).toFixed(2)+'%']);
+    });
+  }
+
+  return rows;
+}
+
+function exportCurrentTab() {
+  const buId = activeBU();
+  const buName = BU_NAMES[buId] || buId;
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(buildSheetData(buId, buName));
+
+  // Column widths
+  ws['!cols'] = [{wch:30},{wch:12},...MESES.map(()=>({wch:15})),{wch:16}];
+
+  XLSX.utils.book_append_sheet(wb, ws, buName.slice(0,31));
+  XLSX.writeFile(wb, `Forecast_2026_${buName.replace(/[^a-zA-Z0-9]/g,'_')}_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+function exportAll() {
+  const wb = XLSX.utils.book_new();
+
+  // All BUs: pgo, god, gme-consolidado, each filial
+  const tabs = [
+    {id:'pgo',      name:'PG Odontologia'},
+    {id:'god',      name:'G. Odontologia'},
+    {id:'gme-consolidado', name:'GME Consolidado'},
+    {id:'gme-campinas',    name:'GME Campinas'},
+    {id:'gme-limeira',     name:'GME Limeira'},
+    {id:'gme-araras',      name:'GME Araras'},
+    {id:'gme-fms',         name:'GME FMS'},
+  ];
+
+  tabs.forEach(({id, name}) => {
+    try {
+      const ws = XLSX.utils.aoa_to_sheet(buildSheetData(id, name));
+      ws['!cols'] = [{wch:30},{wch:12},...MESES.map(()=>({wch:15})),{wch:16}];
+      XLSX.utils.book_append_sheet(wb, ws, name.slice(0,31));
+    } catch(e) { console.warn('skip', id, e); }
+  });
+
+  XLSX.writeFile(wb, `Forecast_2026_Completo_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+// init
+render();
+</script>
+</body>
+</html>
